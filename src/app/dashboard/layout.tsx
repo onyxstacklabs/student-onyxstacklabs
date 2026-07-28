@@ -4,6 +4,7 @@ import React from 'react';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import Sidebar from '@/components/dashboard/Sidebar';
 import TopNav from '@/components/dashboard/TopNav';
+import MobileNav from '@/components/dashboard/MobileNav';
 
 export default function DashboardLayout({
   children,
@@ -12,8 +13,11 @@ export default function DashboardLayout({
 }) {
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex overflow-hidden">
-        {/* Desktop Sidebar */}
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col md:flex-row overflow-hidden">
+        {/* Mobile Navigation Drawer & Toggle */}
+        <MobileNav />
+
+        {/* Desktop Sidebar Component */}
         <Sidebar />
 
         {/* Main Content Area Container */}
@@ -22,7 +26,7 @@ export default function DashboardLayout({
           <TopNav />
 
           {/* Main Scrollable Area */}
-          <main className="flex-1 overflow-y-auto p-6 focus:outline-none">
+          <main className="flex-1 overflow-y-auto p-4 md:p-6 focus:outline-none">
             {children}
           </main>
         </div>
