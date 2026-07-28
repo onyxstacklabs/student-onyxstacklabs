@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useAuth } from '@/context/AuthContext';
+import StatsCards from '@/components/dashboard/StatsCards';
 
 export default function DashboardPage() {
   const { profile } = useAuth();
@@ -23,22 +24,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Grid Section for Widgets */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Statistics Cards Placeholder (Step 7.6) */}
-        <div className="p-4 bg-slate-900/60 border border-slate-800 rounded-xl text-xs text-slate-400">
-          Stats Widgets Placeholder
-        </div>
-        <div className="p-4 bg-slate-900/60 border border-slate-800 rounded-xl text-xs text-slate-400">
-          Stats Widgets Placeholder
-        </div>
-        <div className="p-4 bg-slate-900/60 border border-slate-800 rounded-xl text-xs text-slate-400">
-          Stats Widgets Placeholder
-        </div>
-        <div className="p-4 bg-slate-900/60 border border-slate-800 rounded-xl text-xs text-slate-400">
-          Stats Widgets Placeholder
-        </div>
-      </div>
+      {/* Statistics Cards Section */}
+      <StatsCards />
 
       {/* Main Content Grid (Two Column Layout for Main Widgets) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
