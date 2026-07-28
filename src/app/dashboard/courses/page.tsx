@@ -4,6 +4,7 @@ import React from 'react';
 import SubjectCard, { SubjectProps } from '@/components/subjects/SubjectCard';
 import SemesterSelector from '@/components/subjects/SemesterSelector';
 import Timetable from '@/components/subjects/Timetable';
+import AttendanceTracker from '@/components/subjects/AttendanceTracker';
 
 const mockSubjects: SubjectProps[] = [
   {
@@ -74,6 +75,9 @@ export default function CoursesPage() {
           <SubjectCard key={subject.id} subject={subject} />
         ))}
       </div>
+
+      {/* Attendance Tracker Section */}
+      <AttendanceTracker />
 
       {/* Timetable Section */}
       <Timetable />
