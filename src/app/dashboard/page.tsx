@@ -4,6 +4,7 @@ import React from 'react';
 import { useAuth } from '@/context/AuthContext';
 import StatsCards from '@/components/dashboard/StatsCards';
 import QuickActions from '@/components/dashboard/QuickActions';
+import RecentActivity from '@/components/dashboard/RecentActivity';
 
 export default function DashboardPage() {
   const { profile } = useAuth();
@@ -32,9 +33,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column (2 Cols wide on Desktop) */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="p-6 bg-slate-900/60 border border-slate-800 rounded-xl text-sm text-slate-400">
-            Main Core Content & Recent Activity Area (Step 7.8)
-          </div>
+          <RecentActivity />
         </div>
 
         {/* Right Column (1 Col wide on Desktop) */}
