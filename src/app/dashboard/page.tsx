@@ -1,36 +1,61 @@
 'use client';
 
-import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import React from 'react';
 import { useAuth } from '@/context/AuthContext';
 
 export default function DashboardPage() {
-  const { profile, logout } = useAuth();
+  const { profile } = useAuth();
 
   return (
-    <ProtectedRoute>
-      <div className="min-h-screen bg-slate-950 text-white p-8">
-        <div className="max-w-4xl mx-auto space-y-6">
-          <div className="flex justify-between items-center border-b border-slate-800 pb-4">
-            <h1 className="text-3xl font-bold text-indigo-400">Dashboard</h1>
-            <button
-              onClick={logout}
-              className="px-4 py-2 bg-red-600/20 text-red-400 border border-red-500/30 rounded-lg hover:bg-red-600/30 transition text-sm font-medium"
-            >
-              Sign Out
-            </button>
-          </div>
+    <div className="space-y-6 max-w-7xl mx-auto">
+      {/* Welcome Banner */}
+      <div className="p-6 bg-gradient-to-r from-indigo-900/40 via-slate-900 to-slate-900 border border-indigo-500/20 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-white tracking-tight">
+            Welcome back, {profile?.displayName || 'Student'}! 👋
+          </h1>
+          <p className="text-xs text-slate-400 mt-1">
+            Here is what’s happening with your learning portal today.
+          </p>
+        </div>
+        <div className="px-3 py-1.5 bg-indigo-500/10 border border-indigo-500/20 rounded-lg text-xs font-semibold text-indigo-400 shrink-0">
+          Role: {profile?.role || 'STUDENT'}
+        </div>
+      </div>
 
-          <div className="p-6 bg-slate-900 rounded-xl border border-slate-800 space-y-3">
-            <h2 className="text-xl font-semibold">User Profile Details</h2>
-            <div className="text-sm text-slate-300 space-y-1">
-              <p><strong className="text-slate-100">Name:</strong> {profile?.displayName}</p>
-              <p><strong className="text-slate-100">Email:</strong> {profile?.email}</p>
-              <p><strong className="text-slate-100">Role:</strong> {profile?.role}</p>
-              <p><strong className="text-slate-100">UID:</strong> {profile?.uid}</p>
-            </div>
+      {/* Grid Section for Widgets */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Statistics Cards Placeholder (Step 7.6) */}
+        <div className="p-4 bg-slate-900/60 border border-slate-800 rounded-xl text-xs text-slate-400">
+          Stats Widgets Placeholder
+        </div>
+        <div className="p-4 bg-slate-900/60 border border-slate-800 rounded-xl text-xs text-slate-400">
+          Stats Widgets Placeholder
+        </div>
+        <div className="p-4 bg-slate-900/60 border border-slate-800 rounded-xl text-xs text-slate-400">
+          Stats Widgets Placeholder
+        </div>
+        <div className="p-4 bg-slate-900/60 border border-slate-800 rounded-xl text-xs text-slate-400">
+          Stats Widgets Placeholder
+        </div>
+      </div>
+
+      {/* Main Content Grid (Two Column Layout for Main Widgets) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column (2 Cols wide on Desktop) */}
+        <div className="lg:col-span-2 space-y-6">
+          <div className="p-6 bg-slate-900/60 border border-slate-800 rounded-xl text-sm text-slate-400">
+            Main Core Content & Recent Activity Area (Step 7.8)
+          </div>
+        </div>
+
+        {/* Right Column (1 Col wide on Desktop) */}
+        <div className="space-y-6">
+          <div className="p-6 bg-slate-900/60 border border-slate-800 rounded-xl text-sm text-slate-400">
+            Side Widgets & Quick Actions Area (Step 7.7)
           </div>
         </div>
       </div>
-    </ProtectedRoute>
+    </div>
   );
 }
