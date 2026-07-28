@@ -2,6 +2,7 @@
 
 import React from 'react';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import Sidebar from '@/components/dashboard/Sidebar';
 
 export default function DashboardLayout({
   children,
@@ -11,12 +12,8 @@ export default function DashboardLayout({
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-slate-950 text-slate-100 flex overflow-hidden">
-        {/* Sidebar Area Placeholder (Step 7.2) */}
-        <aside className="hidden md:flex flex-col w-64 border-r border-slate-800 bg-slate-900/50 p-4 shrink-0">
-          <div className="text-xs uppercase tracking-wider text-slate-500 font-semibold px-2 py-1">
-            Navigation Area
-          </div>
-        </aside>
+        {/* Desktop Sidebar Component */}
+        <Sidebar />
 
         {/* Main Content Area Container */}
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
