@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-bg-app: #0F172A;
+    --color-bg-surface: #1E293B;
+    --color-bg-card: #334155;
+    --color-bg-card-hover: #475569;
+    
+    --color-border-subtle: #334155;
+    --color-border-focus: #6366F1;
+    
+    --color-text-primary: #F8FAFC;
+    --color-text-secondary: #94A3B8;
+    --color-text-muted: #64748B;
+  }
+
+  body {
+    background-color: var(--color-bg-app);
+    color: var(--color-text-primary);
+    font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+}
