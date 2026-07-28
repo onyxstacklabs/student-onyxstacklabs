@@ -3,6 +3,7 @@
 import React from 'react';
 import SubjectCard, { SubjectProps } from '@/components/subjects/SubjectCard';
 import SemesterSelector from '@/components/subjects/SemesterSelector';
+import Timetable from '@/components/subjects/Timetable';
 
 const mockSubjects: SubjectProps[] = [
   {
@@ -73,6 +74,9 @@ export default function CoursesPage() {
           <SubjectCard key={subject.id} subject={subject} />
         ))}
       </div>
+
+      {/* Timetable Section */}
+      <Timetable />
     </div>
   );
 }
