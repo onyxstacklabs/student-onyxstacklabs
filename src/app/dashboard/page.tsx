@@ -3,6 +3,7 @@
 import React from 'react';
 import { useAuth } from '@/context/AuthContext';
 import StatsCards from '@/components/dashboard/StatsCards';
+import QuickActions from '@/components/dashboard/QuickActions';
 
 export default function DashboardPage() {
   const { profile } = useAuth();
@@ -27,7 +28,7 @@ export default function DashboardPage() {
       {/* Statistics Cards Section */}
       <StatsCards />
 
-      {/* Main Content Grid (Two Column Layout for Main Widgets) */}
+      {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column (2 Cols wide on Desktop) */}
         <div className="lg:col-span-2 space-y-6">
@@ -38,9 +39,7 @@ export default function DashboardPage() {
 
         {/* Right Column (1 Col wide on Desktop) */}
         <div className="space-y-6">
-          <div className="p-6 bg-slate-900/60 border border-slate-800 rounded-xl text-sm text-slate-400">
-            Side Widgets & Quick Actions Area (Step 7.7)
-          </div>
+          <QuickActions />
         </div>
       </div>
     </div>
