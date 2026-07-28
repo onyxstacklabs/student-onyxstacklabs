@@ -2,6 +2,7 @@
 
 import React from 'react';
 import SubjectCard, { SubjectProps } from '@/components/subjects/SubjectCard';
+import SemesterSelector from '@/components/subjects/SemesterSelector';
 
 const mockSubjects: SubjectProps[] = [
   {
@@ -49,6 +50,9 @@ const mockSubjects: SubjectProps[] = [
 export default function CoursesPage() {
   return (
     <div className="space-y-6">
+      {/* Semester Management Header */}
+      <SemesterSelector />
+
       {/* Header & Filter Row */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
