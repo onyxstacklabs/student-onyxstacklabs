@@ -48,7 +48,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Safety net: agar Firebase Auth ka onAuthStateChanged listener kabhi
+    // na chale (jaise IndexedDB hang ho jaye), to bhi 10 second baad
+    // forcibly loading band kar do — taake UI kabhi hamesha ke liye na atke.
+    const safetyTimeout = setTimeout(() => {
+      setLoading((prev) => {
+        if (prev) {
+          console.error('onAuthStateChanged never fired — forcing loading=false');
+          setError('Session check timed out. Please try signing in again.');
+        }
+        return false;
+      });
+    }, 10000);
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      clearTimeout(safetyTimeout);
       setUser(firebaseUser);
       setError(null);
 
@@ -87,10 +101,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setProfile(null);
       }
 
-      setLoading(false); // ← ab ye HAMESHA chalega, chahe error aaye ya na aaye
+      setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      clearTimeout(safetyTimeout);
+      unsubscribe();
+    };
   }, []);
 
   const logout = async () => {
