@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { CampusRoute } from '@/types/mobility';
-import { CampusMapCard } from '@/components/mobility/CampusMapCard';
+import { CampusMap } from '@/components/mobility/CampusMap';
 import { RouteSelector } from '@/components/mobility/RouteSelector';
 import { TripTrackerCard } from '@/components/mobility/TripTrackerCard';
 import { CampusWeatherWidget } from '@/components/mobility/CampusWeatherWidget';
@@ -10,7 +10,7 @@ import { EVDashboardCard } from '@/components/mobility/EVDashboardCard';
 import { BatteryHealthCard } from '@/components/mobility/BatteryHealthCard';
 import { ChargingStationList } from '@/components/mobility/ChargingStationList';
 import { TravelAnalyticsCard } from '@/components/mobility/TravelAnalyticsCard';
-import { Navigation, Compass, Zap, ShieldCheck } from 'lucide-react';
+import { Navigation, ShieldCheck, Zap } from 'lucide-react';
 
 export default function SmartMobilityDashboardPage() {
   const [selectedRoute, setSelectedRoute] = useState<CampusRoute | null>(null);
@@ -49,7 +49,7 @@ export default function SmartMobilityDashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column: Campus Map & Navigation Selector (2 Cols wide on Desktop) */}
         <div className="lg:col-span-2 space-y-6">
-          <CampusMapCard activeRoute={selectedRoute} />
+          <CampusMap activeRoute={selectedRoute} />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <RouteSelector
