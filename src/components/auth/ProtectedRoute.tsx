@@ -33,7 +33,8 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
     }
   }, [user, profile, loading, allowedRoles, router]);
 
-  if (loading || !user) {
+  // Sirf tab loader dikhayen jab sach mein loading chal rahi ho
+  if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-white gap-4 p-6 text-center">
         <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-indigo-500"></div>
@@ -46,6 +47,11 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
         </div>
       </div>
     );
+  }
+
+  // Agar user nahi hai ya allowed role match nahi hota, toh null return karein (taake redirect ho sake bina screen lock hone ke)
+  if (!user || (allowedRoles && profile && !allowedRoles.includes(profile.role))) {
+    return null;
   }
 
   return <>{children}</>;
