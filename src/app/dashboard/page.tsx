@@ -7,7 +7,16 @@ import QuickActions from '@/components/dashboard/QuickActions';
 import RecentActivity from '@/components/dashboard/RecentActivity';
 
 export default function DashboardPage() {
-  const { profile } = useAuth();
+  const { profile, loading } = useAuth();
+
+  // Agar profile load ho rahi ho toh blank screen ki jagah loading spinner dikhayein
+  if (loading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
