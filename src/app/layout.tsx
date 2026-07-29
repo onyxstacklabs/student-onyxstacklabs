@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
-import './globals.css';
+import '@/styles/globals.css';
 import { PwaRegister } from '@/components/pwa/PwaRegister';
 import { SITE_CONFIG } from '@/lib/seo/metadataEngine';
 
