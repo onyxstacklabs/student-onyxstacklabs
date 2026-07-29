@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { db } from '@/lib/firebase/config'; // Direct Firestore client instance
+import { db } from '@/lib/firebase';
 import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 
 export interface ActivityItem {
@@ -27,7 +27,6 @@ export default function RecentActivity() {
       }
 
       try {
-        // Fetch real student activity telemetry/tasks from Firestore
         const q = query(
           collection(db, 'activity_telemetry'),
           where('userId', '==', user.uid),
