@@ -2,7 +2,8 @@ import React from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getArticleBySlug, getPublishedArticles } from '@/lib/content/contentService';
-import { ArrowLeft, Clock, Calendar, User, Tag, Share2, BookOpen } from 'lucide-react';
+import { ShareButton } from '@/components/content/ShareButton';
+import { ArrowLeft, Clock, Calendar, User, Tag } from 'lucide-react';
 
 interface ArticlePageProps {
   params: {
@@ -42,7 +43,7 @@ export default function ArticleDetailPage({ params }: ArticlePageProps) {
           </span>
         </div>
 
-        {/* Article Header */}
+        {/* Header */}
         <header className="space-y-4 border-b border-slate-800 pb-8">
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white leading-tight">
             {article.title}
@@ -53,7 +54,6 @@ export default function ArticleDetailPage({ params }: ArticlePageProps) {
           </p>
 
           <div className="flex flex-wrap items-center justify-between gap-4 pt-4 text-xs text-slate-400">
-            {/* Author Meta */}
             <div className="flex items-center space-x-3">
               <div className="p-2 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
                 <User className="w-4 h-4" />
@@ -64,7 +64,6 @@ export default function ArticleDetailPage({ params }: ArticlePageProps) {
               </div>
             </div>
 
-            {/* Publishing Telemetry */}
             <div className="flex items-center space-x-4">
               <span className="flex items-center space-x-1">
                 <Calendar className="w-3.5 h-3.5 text-slate-500" />
@@ -87,13 +86,13 @@ export default function ArticleDetailPage({ params }: ArticlePageProps) {
           </div>
         </header>
 
-        {/* Article Body Content */}
+        {/* Content */}
         <div
           className="prose prose-invert max-w-none text-slate-300 text-sm sm:text-base leading-relaxed space-y-4 font-normal"
           dangerouslySetInnerHTML={{ __html: article.contentHtml }}
         />
 
-        {/* Article Footer & Tags */}
+        {/* Footer */}
         <footer className="pt-8 border-t border-slate-800 space-y-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center space-x-2">
@@ -110,23 +109,7 @@ export default function ArticleDetailPage({ params }: ArticlePageProps) {
               </div>
             </div>
 
-            <button
-              onClick={() => {
-                if (navigator.share) {
-                  navigator.share({
-                    title: article.title,
-                    url: window.location.href,
-                  });
-                } else {
-                  navigator.clipboard.writeText(window.location.href);
-                  alert('Article link copied to clipboard!');
-                }
-              }}
-              className="inline-flex items-center space-x-2 px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 text-xs font-semibold transition-colors"
-            >
-              <Share2 className="w-3.5 h-3.5" />
-              <span>Share Article</span>
-            </button>
+            <ShareButton title={article.title} />
           </div>
         </footer>
       </article>
