@@ -30,8 +30,7 @@ const AuthContext = createContext<AuthContextType>({
   signInWithGoogle: async () => {},
 });
 
-// Helper: race any promise against a timeout so a slow/hung Firestore call
-// can never freeze the UI forever.
+// Helper: race any promise against a timeout so a slow/hung Firestore call can never freeze UI
 function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
   return Promise.race([
     promise,
@@ -48,70 +47,103 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Safety net: agar Firebase Auth ka onAuthStateChanged listener kabhi
-    // na chale (jaise IndexedDB hang ho jaye), to bhi 10 second baad
-    // forcibly loading band kar do — taake UI kabhi hamesha ke liye na atke.
+    // Ensure execution happens strictly on the client side
+    if (typeof window === 'undefined') return;
+
+    // Hard limit safety net: 3 seconds maximum loading time
     const safetyTimeout = setTimeout(() => {
       setLoading((prev) => {
         if (prev) {
-          console.error('onAuthStateChanged never fired — forcing loading=false');
-          setError('Session check timed out. Please try signing in again.');
+          console.warn('Auth check taking longer than expected — forcing loading to false.');
         }
         return false;
       });
-    }, 10000);
+    }, 3000);
 
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      clearTimeout(safetyTimeout);
-      setUser(firebaseUser);
-      setError(null);
+    let unsubscribe: () => void = () => {};
 
-      if (firebaseUser) {
-        try {
-          const userDocRef = doc(db, 'users', firebaseUser.uid);
-          const userDoc = await withTimeout(getDoc(userDocRef), 8000, 'Firestore getDoc');
+    try {
+      unsubscribe = onAuthStateChanged(
+        auth,
+        async (firebaseUser) => {
+          clearTimeout(safetyTimeout);
+          setUser(firebaseUser);
+          setError(null);
 
-          if (userDoc.exists()) {
-            setProfile(userDoc.data() as UserProfile);
+          if (firebaseUser) {
+            try {
+              const userDocRef = doc(db, 'users', firebaseUser.uid);
+              const userDoc = await withTimeout(getDoc(userDocRef), 4000, 'Firestore getDoc');
+
+              if (userDoc.exists()) {
+                setProfile(userDoc.data() as UserProfile);
+              } else {
+                const newProfile: UserProfile = {
+                  uid: firebaseUser.uid,
+                  email: firebaseUser.email || '',
+                  displayName: firebaseUser.displayName || 'User',
+                  photoURL: firebaseUser.photoURL || '',
+                  role: 'STUDENT',
+                  preferences: {
+                    theme: 'system',
+                    language: 'en',
+                    timezone: 'UTC',
+                    notifications: { email: true, push: true },
+                  },
+                  createdAt: new Date().toISOString(),
+                  updatedAt: new Date().toISOString(),
+                };
+                await withTimeout(setDoc(userDocRef, newProfile), 4000, 'Firestore setDoc');
+                setProfile(newProfile);
+              }
+            } catch (err: any) {
+              console.error('Firestore fallback engaged:', err);
+              // Fallback local profile state if Firestore fetch fails/hangs
+              setProfile({
+                uid: firebaseUser.uid,
+                email: firebaseUser.email || '',
+                displayName: firebaseUser.displayName || 'User',
+                photoURL: firebaseUser.photoURL || '',
+                role: 'STUDENT',
+                preferences: {
+                  theme: 'system',
+                  language: 'en',
+                  timezone: 'UTC',
+                  notifications: { email: true, push: true },
+                },
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+              });
+            }
           } else {
-            const newProfile: UserProfile = {
-              uid: firebaseUser.uid,
-              email: firebaseUser.email || '',
-              displayName: firebaseUser.displayName || 'User',
-              photoURL: firebaseUser.photoURL || '',
-              role: 'STUDENT',
-              preferences: {
-                theme: 'system',
-                language: 'en',
-                timezone: 'UTC',
-                notifications: { email: true, push: true },
-              },
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            };
-            await withTimeout(setDoc(userDocRef, newProfile), 8000, 'Firestore setDoc');
-            setProfile(newProfile);
+            setProfile(null);
           }
-        } catch (err: any) {
-          console.error('AuthContext profile fetch/create failed:', err);
-          setError(err.message || 'Failed to load profile');
-          setProfile(null);
-        }
-      } else {
-        setProfile(null);
-      }
 
+          setLoading(false);
+        },
+        (err) => {
+          console.error('Auth Listener Error:', err);
+          clearTimeout(safetyTimeout);
+          setError(err.message || 'Authentication error');
+          setLoading(false);
+        }
+      );
+    } catch (err: any) {
+      console.error('Failed to attach auth listener:', err);
+      clearTimeout(safetyTimeout);
       setLoading(false);
-    });
+    }
 
     return () => {
       clearTimeout(safetyTimeout);
-      unsubscribe();
+      if (unsubscribe) unsubscribe();
     };
   }, []);
 
   const logout = async () => {
     await firebaseSignOut(auth);
+    setUser(null);
+    setProfile(null);
   };
 
   const signInWithGoogle = async () => {
