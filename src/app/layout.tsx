@@ -6,13 +6,16 @@ import { SITE_CONFIG } from '@/lib/seo/metadataEngine';
 
 const inter = Inter({ subsets: ['latin'] });
 
+// Fallback site URL to avoid invalid URL errors during static page generation
+const baseUrl = SITE_CONFIG?.url || 'https://student.onyxstacklabs.com';
+
 export const metadata: Metadata = {
   title: {
     default: SITE_CONFIG.title,
     template: `%s | ${SITE_CONFIG.siteName}`,
   },
   description: SITE_CONFIG.description,
-  metadataBase: new URL(SITE_CONFIG.url),
+  metadataBase: new URL(baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`),
   icons: {
     icon: '/favicon.ico',
     apple: '/icon-192.png',
