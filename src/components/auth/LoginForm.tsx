@@ -22,21 +22,24 @@ export default function LoginForm() {
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
+      router.refresh();
       router.push('/dashboard');
     } catch (err: any) {
       setError(err.message || 'Failed to sign in');
-    } finally {
       setLoading(false);
     }
   };
 
   const handleGoogleSignIn = async () => {
     setError('');
+    setLoading(true);
     try {
       await signInWithGoogle();
+      router.refresh();
       router.push('/dashboard');
     } catch (err: any) {
       setError(err.message || 'Failed to sign in with Google');
+      setLoading(false);
     }
   };
 
@@ -100,8 +103,10 @@ export default function LoginForm() {
       </div>
 
       <button
+        type="button"
         onClick={handleGoogleSignIn}
-        className="w-full py-2.5 border border-slate-700 hover:bg-slate-800 transition font-medium rounded-lg flex items-center justify-center gap-2"
+        disabled={loading}
+        className="w-full py-2.5 border border-slate-700 hover:bg-slate-800 transition font-medium rounded-lg flex items-center justify-center gap-2 disabled:opacity-50"
       >
         <span>Google</span>
       </button>
