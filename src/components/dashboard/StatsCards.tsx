@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { db } from '@/lib/firebase/config';
+import { db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 
 interface StudentStats {
@@ -26,7 +26,6 @@ export default function StatsCards() {
       }
 
       try {
-        // Fetch real aggregated student stats from Firestore
         const statsRef = doc(db, 'student_metrics', user.uid);
         const statsSnap = await getDoc(statsRef);
 
@@ -40,7 +39,6 @@ export default function StatsCards() {
             currentGpa: data.currentGpa || 0.0,
           });
         } else {
-          // Default fresh state for newly onboarded students
           setStats({
             enrolledCoursesCount: 0,
             totalStudyHours: 0,
