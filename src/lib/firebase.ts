@@ -1,12 +1,6 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { 
-  getAuth, 
-  initializeAuth, 
-  browserLocalPersistence, 
-  browserSessionPersistence, 
-  indexedDBLocalPersistence 
-} from 'firebase/auth';
-import { initializeFirestore } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
@@ -18,31 +12,12 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// App Initialization
+// Safe Singleton App Initialization
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-// Auth Initialization with Safe Fallback & Hot-Reload Prevention
-const auth = (() => {
-  if (typeof window === 'undefined') {
-    return getAuth(app);
-  }
-  
-  // Mobile / Browser persistence fix
-  try {
-    return initializeAuth(app, {
-      persistence: [browserLocalPersistence, browserSessionPersistence, indexedDBLocalPersistence],
-    });
-  } catch (e) {
-    // Agar auth pehle se initialize ho chuka ho (Next.js re-render/HMR)
-    return getAuth(app);
-  }
-})();
-
-// Firestore Initialization
-const db = initializeFirestore(app, {
-  experimentalForceLongPolling: true,
-});
-
+// Standard Firebase Services Initialization
+const auth = getAuth(app);
+const db = getFirestore(app);
 const storage = getStorage(app);
 
 export { app, auth, db, storage };
