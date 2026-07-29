@@ -1,121 +1,74 @@
 import React from 'react';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
-import { getArticleBySlug, getPublishedArticles } from '@/lib/content/contentService';
-import { ShareButton } from '@/components/content/ShareButton';
-import { ArrowLeft, Clock, Calendar, User, Tag } from 'lucide-react';
+import { getPublishedArticles } from '@/lib/content/contentService';
+import { BookOpen, Calendar, Clock, ArrowRight, User } from 'lucide-react';
 
-interface ArticlePageProps {
-  params: {
-    slug: string;
-  };
-}
-
-export async function generateStaticParams() {
+export default function BlogIndexPage() {
   const articles = getPublishedArticles();
-  return articles.map((article) => ({
-    slug: article.slug,
-  }));
-}
-
-export default function ArticleDetailPage({ params }: ArticlePageProps) {
-  const article = getArticleBySlug(params.slug);
-
-  if (!article) {
-    notFound();
-  }
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 py-12 px-4 sm:px-6 lg:px-8">
-      <article className="max-w-4xl mx-auto space-y-8">
-        {/* Navigation & Back Link */}
-        <div className="flex items-center justify-between">
-          <Link
-            href="/blog"
-            className="inline-flex items-center space-x-2 text-xs font-semibold text-slate-400 hover:text-white transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Back to Knowledge Base</span>
-          </Link>
-
-          <span className="px-2.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold">
-            {article.category.name}
-          </span>
+      <div className="max-w-6xl mx-auto space-y-10">
+        {/* Header */}
+        <div className="text-center space-y-3 max-w-2xl mx-auto">
+          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold">
+            <BookOpen className="w-3.5 h-3.5" />
+            <span>Knowledge Base & Updates</span>
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+            Onyx Stack Labs Insights
+          </h1>
+          <p className="text-slate-400 text-sm sm:text-base">
+            Explore articles, updates, and deep dives into campus management tech and micro-SaaS architecture.
+          </p>
         </div>
 
-        {/* Article Header */}
-        <header className="space-y-4 border-b border-slate-800 pb-8">
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white leading-tight">
-            {article.title}
-          </h1>
-
-          <p className="text-slate-300 text-base sm:text-lg leading-relaxed">
-            {article.excerpt}
-          </p>
-
-          <div className="flex flex-wrap items-center justify-between gap-4 pt-4 text-xs text-slate-400">
-            {/* Author Meta */}
-            <div className="flex items-center space-x-3">
-              <div className="p-2 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                <User className="w-4 h-4" />
-              </div>
-              <div>
-                <p className="font-bold text-white">{article.author.name}</p>
-                <p className="text-slate-500 text-[11px]">{article.author.role}</p>
-              </div>
-            </div>
-
-            {/* Publishing Telemetry */}
-            <div className="flex items-center space-x-4">
-              <span className="flex items-center space-x-1">
-                <Calendar className="w-3.5 h-3.5 text-slate-500" />
-                <span>
-                  {article.publishedAt
-                    ? new Date(article.publishedAt).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })
-                    : 'Draft'}
-                </span>
-              </span>
-              <span>•</span>
-              <span className="flex items-center space-x-1">
-                <Clock className="w-3.5 h-3.5 text-slate-500" />
-                <span>{article.readingTimeMinutes} min read</span>
-              </span>
-            </div>
-          </div>
-        </header>
-
-        {/* Article Body Content */}
-        <div
-          className="prose prose-invert max-w-none text-slate-300 text-sm sm:text-base leading-relaxed space-y-4 font-normal"
-          dangerouslySetInnerHTML={{ __html: article.contentHtml }}
-        />
-
-        {/* Article Footer & Tags */}
-        <footer className="pt-8 border-t border-slate-800 space-y-6">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center space-x-2">
-              <Tag className="w-4 h-4 text-slate-500" />
-              <div className="flex flex-wrap gap-1.5">
-                {article.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="px-2.5 py-1 rounded bg-slate-900 border border-slate-800 text-slate-300 text-xs font-medium"
-                  >
-                    #{tag}
+        {/* Articles Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {articles.map((article) => (
+            <article
+              key={article.id}
+              className="bg-slate-900 border border-slate-800 rounded-xl p-5 flex flex-col justify-between hover:border-slate-700 transition-all duration-200 shadow-lg"
+            >
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="px-2.5 py-1 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-[11px] font-semibold">
+                    {article.category.name}
                   </span>
-                ))}
-              </div>
-            </div>
+                  <span className="flex items-center space-x-1 text-slate-400 text-xs">
+                    <Clock className="w-3 h-3 text-slate-500" />
+                    <span>{article.readingTimeMinutes} min</span>
+                  </span>
+                </div>
 
-            {/* Extracted Client Share Button */}
-            <ShareButton title={article.title} />
-          </div>
-        </footer>
-      </article>
+                <div className="space-y-2">
+                  <h2 className="text-lg font-bold text-white line-clamp-2 hover:text-indigo-400 transition-colors">
+                    <Link href={`/blog/${article.slug}`}>{article.title}</Link>
+                  </h2>
+                  <p className="text-slate-400 text-xs line-clamp-3 leading-relaxed">
+                    {article.excerpt}
+                  </p>
+                </div>
+              </div>
+
+              <div className="pt-6 border-t border-slate-800/80 mt-6 flex items-center justify-between text-xs">
+                <div className="flex items-center space-x-2 text-slate-300 font-medium">
+                  <User className="w-3.5 h-3.5 text-slate-500" />
+                  <span>{article.author.name}</span>
+                </div>
+
+                <Link
+                  href={`/blog/${article.slug}`}
+                  className="inline-flex items-center space-x-1 text-indigo-400 hover:text-indigo-300 font-semibold"
+                >
+                  <span>Read</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
