@@ -17,7 +17,7 @@ export const DEFAULT_ROLE_REDIRECTS: Record<UserRole, string> = {
   STUDENT: '/dashboard',
   PARENT: '/dashboard',
   TEACHER: '/dashboard',
-  INSTITUTION: '/dashboard',
-  ADMIN: '/dashboard',
-  SUPER_ADMIN: '/dashboard',
+  INSTITUTION: '/dashboard/institution',
+  ADMIN: '/dashboard/admin',
+  SUPER_ADMIN: '/dashboard/admin',
 };
