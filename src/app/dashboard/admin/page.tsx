@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { AnalyticsDashboardCard } from '@/components/analytics/AnalyticsDashboardCard';
 import { SeoManagerCard } from '@/components/seo/SeoManagerCard';
 import { useAuth, UserRole } from '@/context/AuthContext';
@@ -17,7 +18,8 @@ import {
   Activity,
   CheckCircle2,
   UserCheck,
-  ShieldAlert
+  ShieldAlert,
+  Loader2
 } from 'lucide-react';
 
 interface SystemUser {
@@ -30,7 +32,18 @@ interface SystemUser {
 }
 
 export default function AdminDashboardPage() {
-  const { profile, switchRole } = useAuth();
+  const { profile, role, loading, switchRole } = useAuth();
+  const router = useRouter();
+
+  // 🔒 STRICT ROLE GUARD & SECURITY CHECK
+  useEffect(() => {
+    if (!loading) {
+      // Agar active role ADMIN nahi hai (jaise STUDENT hai), to instantly block karke normal dashboard par bhejo
+      if (role !== 'ADMIN') {
+        router.replace('/dashboard');
+      }
+    }
+  }, [role, loading, router]);
 
   // Mock SaaS system users state (Connects to Firestore in production)
   const [users, setUsers] = useState<SystemUser[]>([
@@ -45,6 +58,27 @@ export default function AdminDashboardPage() {
     );
   };
 
+  // 1. Loading State
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-white space-y-3">
+        <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+        <p className="text-xs font-mono text-slate-400">Verifying Security Credentials...</p>
+      </div>
+    );
+  }
+
+  // 2. Block Render if User is NOT Admin (Prevents Security Flashes)
+  if (role !== 'ADMIN') {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-white space-y-3">
+        <ShieldAlert className="w-10 h-10 text-rose-500" />
+        <p className="text-sm font-semibold text-rose-400">Access Denied: Super Admin Privileges Required</p>
+        <p className="text-xs text-slate-400">Redirecting to Student Dashboard...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 py-6 px-2 sm:px-4 lg:px-6">
       <div className="max-w-7xl mx-auto space-y-8">
@@ -58,7 +92,7 @@ export default function AdminDashboardPage() {
                 <span>Super Admin Portal</span>
               </span>
               <span className="px-2 py-0.5 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-[10px] rounded font-mono">
-                Current Role: {profile?.role || 'ADMIN'}
+                Current Role: {role || profile?.role || 'ADMIN'}
               </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
@@ -72,9 +106,14 @@ export default function AdminDashboardPage() {
           {/* Quick Action Links & Dev Role Switcher */}
           <div className="flex flex-wrap items-center gap-2">
             <button
-              onClick={() => switchRole && switchRole('STUDENT')}
+              onClick={async () => {
+                if (switchRole) {
+                  await switchRole('STUDENT');
+                  router.push('/dashboard');
+                }
+              }}
               className="px-3 py-2 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-semibold transition"
-              title="Test Student View"
+              title="Switch to Student View"
             >
               Test Student Portal
             </button>
