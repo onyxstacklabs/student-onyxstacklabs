@@ -8,9 +8,11 @@ import {
   GoogleAuthProvider,
   signInWithPopup
 } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { UserProfile } from '@/types/auth';
+
+export type UserRole = 'ADMIN' | 'INSTRUCTOR' | 'STUDENT';
 
 interface AuthContextType {
   user: FirebaseUser | null;
@@ -19,6 +21,7 @@ interface AuthContextType {
   error: string | null;
   logout: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
+  switchRole: (newRole: UserRole) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -28,6 +31,7 @@ const AuthContext = createContext<AuthContextType>({
   error: null,
   logout: async () => {},
   signInWithGoogle: async () => {},
+  switchRole: async () => {},
 });
 
 function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
@@ -74,15 +78,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             const userDocRef = doc(db, 'users', firebaseUser.uid);
             const userDoc = await withTimeout(getDoc(userDocRef), 2500, 'Firestore Profile Fetch');
 
+            // Super Admin auto-detection based on master domain emails
+            const isSuperAdminEmail = firebaseUser.email?.endsWith('@onyxstacklabs.com') || firebaseUser.email?.includes('admin');
+            const defaultRole: UserRole = isSuperAdminEmail ? 'ADMIN' : 'STUDENT';
+
             if (userDoc.exists()) {
               if (mounted) setProfile(userDoc.data() as UserProfile);
             } else {
               const newProfile: UserProfile = {
                 uid: firebaseUser.uid,
                 email: firebaseUser.email || '',
-                displayName: firebaseUser.displayName || 'Student',
+                displayName: firebaseUser.displayName || (isSuperAdminEmail ? 'Platform Admin' : 'Student User'),
                 photoURL: firebaseUser.photoURL || '',
-                role: 'STUDENT',
+                role: defaultRole as any,
                 preferences: {
                   theme: 'system',
                   language: 'en',
@@ -101,9 +109,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               setProfile({
                 uid: firebaseUser.uid,
                 email: firebaseUser.email || '',
-                displayName: firebaseUser.displayName || 'Student',
+                displayName: firebaseUser.displayName || 'User',
                 photoURL: firebaseUser.photoURL || '',
-                role: 'STUDENT',
+                role: 'STUDENT' as any,
                 preferences: {
                   theme: 'system',
                   language: 'en',
@@ -161,8 +169,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const switchRole = async (newRole: UserRole) => {
+    if (!user || !profile) return;
+    try {
+      const updatedProfile = { ...profile, role: newRole as any, updatedAt: new Date().toISOString() };
+      setProfile(updatedProfile);
+      
+      const userDocRef = doc(db, 'users', user.uid);
+      await updateDoc(userDocRef, { role: newRole, updatedAt: new Date().toISOString() });
+    } catch (err) {
+      console.error('[AuthContext] Role update failed:', err);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, profile, loading, error, logout, signInWithGoogle }}>
+    <AuthContext.Provider value={{ user, profile, loading, error, logout, signInWithGoogle, switchRole }}>
       {children}
     </AuthContext.Provider>
   );
