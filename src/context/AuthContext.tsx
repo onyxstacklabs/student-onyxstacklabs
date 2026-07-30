@@ -6,8 +6,7 @@ import {
   User as FirebaseUser, 
   signOut as firebaseSignOut,
   GoogleAuthProvider,
-  signInWithRedirect,
-  getRedirectResult
+  signInWithPopup
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
@@ -80,16 +79,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [role, setRole] = useState<UserRole>('STUDENT');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Catch the result (and any errors) of a signInWithRedirect flow once,
-  // after Google redirects back to the app.
-  useEffect(() => {
-    getRedirectResult(auth).catch((err: unknown) => {
-      const redirectErr = err as { message?: string };
-      console.error('[AuthContext] Google redirect sign-in failed:', redirectErr);
-      setError(redirectErr.message || 'Google sign-in procedure interrupted');
-    });
-  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -197,9 +186,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       setError(null);
       const provider = new GoogleAuthProvider();
-      await signInWithRedirect(auth, provider);
-      // Execution pauses here — the browser navigates away to Google.
-      // Control resumes via getRedirectResult() on the next page load.
+      await signInWithPopup(auth, provider);
     } catch (err: unknown) {
       const authErr = err as { message?: string };
       console.error('[AuthContext] Google sign-in failed:', authErr);
