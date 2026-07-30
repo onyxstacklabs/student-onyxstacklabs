@@ -10,13 +10,14 @@ interface NavItem {
   label: string;
   href: string;
   icon: string;
+  studentOnly?: boolean;
 }
 
 const navItems: NavItem[] = [
   { label: 'Overview', href: '/dashboard', icon: '📊' },
-  { label: 'AI Assistant', href: '/dashboard/ai-assistant', icon: '🤖' },
-  { label: 'Notes Workspace', href: '/dashboard/notes', icon: '📝' },
-  { label: 'Campus Mobility', href: '/dashboard/mobility', icon: '📍' },
+  { label: 'AI Assistant', href: '/dashboard/ai-assistant', icon: '🤖', studentOnly: true },
+  { label: 'Notes Workspace', href: '/dashboard/notes', icon: '📝', studentOnly: true },
+  { label: 'Campus Mobility', href: '/dashboard/mobility', icon: '📍', studentOnly: true },
   { label: 'Safety & Governance', href: '/dashboard/governance', icon: '🛡️' },
   { label: 'Settings', href: '/dashboard/settings', icon: '⚙️' },
 ];
@@ -28,6 +29,12 @@ export default function MobileNav() {
 
   const userRole = role || profile?.role || 'STUDENT';
   const isAdmin = userRole === 'ADMIN';
+
+  // Filter out student-only modules when logged in as ADMIN
+  const filteredNavItems = navItems.filter(item => {
+    if (isAdmin && item.studentOnly) return false;
+    return true;
+  });
 
   return (
     <>
@@ -60,7 +67,7 @@ export default function MobileNav() {
         </button>
       </div>
 
-      {/* Backdrop Backdrop Overlay */}
+      {/* Backdrop Overlay */}
       {isOpen && (
         <div
           className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-40 md:hidden transition-opacity"
@@ -124,7 +131,7 @@ export default function MobileNav() {
             <div className="text-[10px] uppercase tracking-wider text-slate-500 font-bold px-3 mb-2 font-mono">
               Workspaces
             </div>
-            {navItems.map((item) => {
+            {filteredNavItems.map((item) => {
               const isActive = pathname === item.href;
               return (
                 <Link
