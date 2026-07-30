@@ -68,7 +68,7 @@ export default function NotesPage() {
         if (mounted) setNotes(fetchedNotes);
       } catch (error) {
         console.error('[NotesPage] Error loading notes:', error);
-      } font-mono {
+      } finally {
         if (mounted) setLoading(false);
       }
     }
