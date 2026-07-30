@@ -4,6 +4,7 @@ import React, { useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { UserRole } from '@/types/auth';
+import { DEFAULT_ROLE_REDIRECTS } from '@/lib/rbac';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -19,7 +20,10 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
       if (!user) {
         router.push('/login');
       } else if (allowedRoles && profile && !allowedRoles.includes(profile.role)) {
-        router.push('/unauthorized');
+        // Wrong dashboard for this role — bounce to their real home,
+        // not a dead-end error page.
+        const correctHome = DEFAULT_ROLE_REDIRECTS[profile.role] || '/dashboard';
+        router.push(correctHome);
       }
     }
   }, [user, profile, loading, allowedRoles, router]);
@@ -38,7 +42,7 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
               Verifying Session
             </p>
             <p className="text-[10px] text-slate-500">
-              Securing student portal access...
+              Securing your dashboard access...
             </p>
           </div>
         </div>
