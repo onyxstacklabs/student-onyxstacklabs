@@ -1,16 +1,55 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { AnalyticsDashboardCard } from '@/components/analytics/AnalyticsDashboardCard';
 import { SeoManagerCard } from '@/components/seo/SeoManagerCard';
-import { ShieldCheck, BookOpen, PenSquare, ArrowUpRight, Globe, Layers } from 'lucide-react';
+import { useAuth, UserRole } from '@/context/AuthContext';
+import { 
+  ShieldCheck, 
+  BookOpen, 
+  PenSquare, 
+  ArrowUpRight, 
+  Globe, 
+  Layers,
+  Users,
+  DollarSign,
+  Activity,
+  CheckCircle2,
+  UserCheck,
+  ShieldAlert
+} from 'lucide-react';
+
+interface SystemUser {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  status: 'ACTIVE' | 'SUSPENDED';
+  joinedDate: string;
+}
 
 export default function AdminDashboardPage() {
+  const { profile, switchRole } = useAuth();
+
+  // Mock SaaS system users state (Connects to Firestore in production)
+  const [users, setUsers] = useState<SystemUser[]>([
+    { id: 'usr_1', name: 'Arhaam Admin', email: 'admin@onyxstacklabs.com', role: 'ADMIN', status: 'ACTIVE', joinedDate: '2026-01-15' },
+    { id: 'usr_2', name: 'Sarah Tech', email: 'sarah@instructor.com', role: 'INSTRUCTOR', status: 'ACTIVE', joinedDate: '2026-03-10' },
+    { id: 'usr_3', name: 'John Doe', email: 'john@student.edu', role: 'STUDENT', status: 'ACTIVE', joinedDate: '2026-05-22' },
+  ]);
+
+  const handleRoleChange = async (userId: string, newRole: UserRole) => {
+    setUsers((prev) =>
+      prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u))
+    );
+  };
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 py-10 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-slate-950 text-slate-100 py-6 px-2 sm:px-4 lg:px-6">
       <div className="max-w-7xl mx-auto space-y-8">
-        {/* Admin Header */}
+        
+        {/* Admin Header & Live System Status */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-6">
           <div className="space-y-1">
             <div className="flex items-center space-x-2">
@@ -18,24 +57,35 @@ export default function AdminDashboardPage() {
                 <ShieldCheck className="w-3.5 h-3.5" />
                 <span>Super Admin Portal</span>
               </span>
+              <span className="px-2 py-0.5 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-[10px] rounded font-mono">
+                Current Role: {profile?.role || 'ADMIN'}
+              </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
               Enterprise Operations & Governance
             </h1>
             <p className="text-slate-400 text-xs sm:text-sm">
-              Manage multi-tenant indexing, telemetry, SEO rules, and published content across Onyx Stack Labs.
+              Manage multi-tenant indexing, RBAC user access, SaaS telemetry, and SEO rules across OnyxStack Labs.
             </p>
           </div>
 
-          {/* Quick Action Links */}
-          <div className="flex items-center space-x-3">
+          {/* Quick Action Links & Dev Role Switcher */}
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => switchRole && switchRole('STUDENT')}
+              className="px-3 py-2 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-semibold transition"
+              title="Test Student View"
+            >
+              Test Student Portal
+            </button>
+
             <Link
               href="/blog"
               target="_blank"
               className="inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 text-xs font-semibold transition-colors"
             >
               <Globe className="w-3.5 h-3.5 text-indigo-400" />
-              <span>View Public Blog</span>
+              <span>Public Blog</span>
               <ArrowUpRight className="w-3 h-3 text-slate-500" />
             </Link>
 
@@ -47,6 +97,110 @@ export default function AdminDashboardPage() {
               <Layers className="w-3.5 h-3.5" />
               <span>Live Sitemap</span>
             </Link>
+          </div>
+        </div>
+
+        {/* Section: Key SaaS Telemetry & Financial Overview */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-5 space-y-2">
+            <div className="flex justify-between items-center text-slate-400">
+              <span className="text-xs font-mono uppercase">Total SaaS Users</span>
+              <Users className="w-4 h-4 text-indigo-400" />
+            </div>
+            <div className="text-2xl font-extrabold text-white">1,248</div>
+            <p className="text-[11px] text-emerald-400 flex items-center gap-1">
+              <CheckCircle2 className="w-3 h-3" /> +14% this month
+            </p>
+          </div>
+
+          <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-5 space-y-2">
+            <div className="flex justify-between items-center text-slate-400">
+              <span className="text-xs font-mono uppercase">Monthly Revenue (MRR)</span>
+              <DollarSign className="w-4 h-4 text-emerald-400" />
+            </div>
+            <div className="text-2xl font-extrabold text-white">$4,850</div>
+            <p className="text-[11px] text-slate-400">Active Paid Subscriptions</p>
+          </div>
+
+          <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-5 space-y-2">
+            <div className="flex justify-between items-center text-slate-400">
+              <span className="text-xs font-mono uppercase">Active Workspaces</span>
+              <Activity className="w-4 h-4 text-amber-400" />
+            </div>
+            <div className="text-2xl font-extrabold text-white">312</div>
+            <p className="text-[11px] text-slate-400">Tenant Clusters Active</p>
+          </div>
+
+          <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-5 space-y-2">
+            <div className="flex justify-between items-center text-slate-400">
+              <span className="text-xs font-mono uppercase">System Health</span>
+              <ShieldAlert className="w-4 h-4 text-emerald-400" />
+            </div>
+            <div className="text-2xl font-extrabold text-emerald-400">99.9%</div>
+            <p className="text-[11px] text-slate-400">Firestore & Auth Online</p>
+          </div>
+        </div>
+
+        {/* Section: RBAC User Management Table */}
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+            <h2 className="text-base font-bold text-white flex items-center gap-2">
+              <UserCheck className="w-5 h-5 text-indigo-400" />
+              SaaS Identity & Role Access Control (RBAC)
+            </h2>
+            <span className="text-xs font-mono text-slate-400">3 Total Users Monitored</span>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-950 text-slate-400 font-mono uppercase">
+                <tr>
+                  <th className="p-3 rounded-l-lg">User</th>
+                  <th className="p-3">Current Role</th>
+                  <th className="p-3">Status</th>
+                  <th className="p-3">Joined Date</th>
+                  <th className="p-3 text-right rounded-r-lg">Manage Access</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/60">
+                {users.map((u) => (
+                  <tr key={u.id} className="hover:bg-slate-800/30 transition">
+                    <td className="p-3">
+                      <div className="font-semibold text-white">{u.name}</div>
+                      <div className="text-slate-400 text-[11px]">{u.email}</div>
+                    </td>
+                    <td className="p-3">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
+                        u.role === 'ADMIN' 
+                          ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                          : u.role === 'INSTRUCTOR'
+                          ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                          : 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20'
+                      }`}>
+                        {u.role}
+                      </span>
+                    </td>
+                    <td className="p-3">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                        {u.status}
+                      </span>
+                    </td>
+                    <td className="p-3 text-slate-400 font-mono">{u.joinedDate}</td>
+                    <td className="p-3 text-right">
+                      <select
+                        value={u.role}
+                        onChange={(e) => handleRoleChange(u.id, e.target.value as UserRole)}
+                        className="bg-slate-950 border border-slate-800 rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-indigo-500"
+                      >
+                        <option value="STUDENT">STUDENT</option>
+                        <option value="INSTRUCTOR">INSTRUCTOR</option>
+                        <option value="ADMIN">ADMIN</option>
+                      </select>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
 
