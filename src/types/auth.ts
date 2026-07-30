@@ -13,6 +13,35 @@ export type Permission =
   | 'manage:institution'
   | 'access:admin';
 
+export type BloodGroup = 'A+' | 'A-' | 'B+' | 'B-' | 'AB+' | 'AB-' | 'O+' | 'O-';
+
+export interface ElectricVehicleDetails {
+  hasVehicle: boolean;
+  vehicleName?: string;
+  distanceFromHomeKm?: number;
+  route?: string;
+}
+
+export interface StudentDetails {
+  className: string;
+  collegeName: string;
+  rollNumber: string;
+  subjects: string[];
+  whatsappNumber?: string;
+  parentContactNumber?: string;
+  bloodGroup?: BloodGroup;
+  electricVehicle?: ElectricVehicleDetails;
+}
+
+export interface InstitutionDetails {
+  institutionName: string;
+  address: string;
+  contactEmail: string;
+  contactNumber: string;
+  classes: string[];
+  semesters: string[];
+}
+
 export interface UserProfile {
   uid: string;
   email: string;
@@ -20,11 +49,8 @@ export interface UserProfile {
   photoURL?: string;
   role: UserRole;
   phoneNumber?: string;
-  education?: {
-    institutionName: string;
-    gradeLevel: string;
-    studentId?: string;
-  };
+  studentDetails?: StudentDetails;
+  institutionDetails?: InstitutionDetails;
   emergencyContact?: {
     name: string;
     relationship: string;
