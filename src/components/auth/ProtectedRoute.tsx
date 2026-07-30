@@ -1,8 +1,8 @@
 'use client';
 
+import React, { useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
 import { UserRole } from '@/types/auth';
 
 interface ProtectedRouteProps {
@@ -11,17 +11,8 @@ interface ProtectedRouteProps {
 }
 
 export default function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
-  const { user, profile, loading, error } = useAuth() as any;
+  const { user, profile, loading } = useAuth();
   const router = useRouter();
-  const [elapsed, setElapsed] = useState(0);
-
-  useEffect(() => {
-    const start = Date.now();
-    const interval = setInterval(() => {
-      setElapsed(Math.floor((Date.now() - start) / 1000));
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
 
   useEffect(() => {
     if (!loading) {
@@ -33,23 +24,29 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
     }
   }, [user, profile, loading, allowedRoles, router]);
 
-  // Sirf tab loader dikhayen jab sach mein loading chal rahi ho
+  // Enterprise Loading Screen while checking identity state
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-white gap-4 p-6 text-center">
-        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-indigo-500"></div>
-        <div className="text-xs font-mono bg-slate-900 border border-slate-700 rounded-lg p-4 max-w-full break-words">
-          <div>loading: {String(loading)}</div>
-          <div>user: {user ? user.uid : 'null'}</div>
-          <div>profile: {profile ? 'loaded' : 'null'}</div>
-          <div>error: {error ? String(error) : 'none'}</div>
-          <div>elapsed: {elapsed}s</div>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-slate-100 p-6">
+        <div className="flex flex-col items-center gap-4">
+          <div className="relative flex items-center justify-center">
+            <div className="w-12 h-12 rounded-full border-2 border-indigo-500/20 border-t-indigo-500 animate-spin" />
+            <div className="absolute w-6 h-6 rounded-full border-2 border-purple-500/20 border-b-purple-500 animate-spin-slow" />
+          </div>
+          <div className="space-y-1 text-center">
+            <p className="text-xs font-semibold text-slate-300 tracking-wide uppercase">
+              Verifying Session
+            </p>
+            <p className="text-[10px] text-slate-500">
+              Securing student portal access...
+            </p>
+          </div>
         </div>
       </div>
     );
   }
 
-  // Agar user nahi hai ya allowed role match nahi hota, toh null return karein (taake redirect ho sake bina screen lock hone ke)
+  // Prevent UI flash during unauthorized or unauthenticated redirects
   if (!user || (allowedRoles && profile && !allowedRoles.includes(profile.role))) {
     return null;
   }
