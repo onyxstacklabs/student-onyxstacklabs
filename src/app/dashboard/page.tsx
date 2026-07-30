@@ -14,7 +14,12 @@ import {
   Check,
   ShieldAlert,
   Bot,
-  Compass
+  Compass,
+  ShieldCheck,
+  Users,
+  DollarSign,
+  Activity,
+  Globe
 } from 'lucide-react';
 
 interface Course {
@@ -30,8 +35,12 @@ interface Note {
 }
 
 export default function OverviewPage() {
-  const { user, profile } = useAuth();
+  const { user, profile, role } = useAuth();
   
+  // Resolve active role safely
+  const userRole = role || profile?.role || 'STUDENT';
+  const isAdmin = userRole === 'ADMIN';
+
   // Dynamic SaaS State persistent via LocalStorage
   const [courses, setCourses] = useState<Course[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
@@ -43,7 +52,6 @@ export default function OverviewPage() {
 
   // Auto-sync state from localStorage across modules
   useEffect(() => {
-    // 1. Load Courses
     const savedCourses = localStorage.getItem('onyx_student_courses');
     if (savedCourses) {
       try {
@@ -59,7 +67,6 @@ export default function OverviewPage() {
       localStorage.setItem('onyx_student_courses', JSON.stringify(initial));
     }
 
-    // 2. Load Real Saved Notes Count
     const savedNotes = localStorage.getItem('onyx_student_notes');
     if (savedNotes) {
       try {
@@ -98,6 +105,128 @@ export default function OverviewPage() {
 
   const activeEnrolledCount = courses.filter((c) => c.enrolled).length;
 
+  // ==========================================
+  // 🛑 ADMIN DASHBOARD VIEW (If Role is ADMIN)
+  // ==========================================
+  if (isAdmin) {
+    return (
+      <div className="space-y-8 max-w-7xl mx-auto pb-12">
+        {/* Super Admin Enterprise Banner Header */}
+        <div className="bg-slate-900/80 border border-rose-500/30 rounded-2xl p-6 sm:p-8 backdrop-blur-xl relative overflow-hidden shadow-xl shadow-rose-500/5">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-rose-600/10 rounded-full blur-3xl -z-10 pointer-events-none" />
+          
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="px-3 py-1 bg-rose-500/10 text-rose-400 border border-rose-500/20 text-xs rounded-full font-mono font-medium uppercase tracking-wider flex items-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5" /> Super Admin Portal
+                </span>
+                <span className="px-2.5 py-1 bg-slate-800 text-slate-300 text-xs rounded-full font-mono">
+                  Current Role: ADMIN
+                </span>
+              </div>
+              <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
+                Enterprise Operations & Governance
+              </h1>
+              <p className="text-slate-400 text-sm sm:text-base mt-1">
+                Manage multi-tenant indexing, RBAC user access, SaaS telemetry, and SEO rules across OnyxStack Labs.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Link
+                href="/dashboard"
+                className="flex items-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-sm rounded-xl transition border border-slate-700"
+              >
+                Test Student Portal
+              </Link>
+              <Link
+                href="/"
+                target="_blank"
+                className="flex items-center gap-2 px-4 py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-medium text-sm rounded-xl transition shadow-lg shadow-rose-600/20 active:scale-95"
+              >
+                <Globe className="w-4 h-4" /> Public Blog
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Enterprise Metrics Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 shadow-lg">
+            <div className="flex justify-between items-start">
+              <div className="space-y-2">
+                <p className="text-xs font-mono text-slate-400 uppercase tracking-wider">TOTAL SAAS USERS</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-4xl font-extrabold text-white tracking-tight">1,248</span>
+                  <span className="text-emerald-400 text-xs font-semibold">+14% this month</span>
+                </div>
+              </div>
+              <div className="p-3 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 rounded-xl">
+                <Users className="w-6 h-6" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 shadow-lg">
+            <div className="flex justify-between items-start">
+              <div className="space-y-2">
+                <p className="text-xs font-mono text-slate-400 uppercase tracking-wider">MONTHLY REVENUE (MRR)</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-4xl font-extrabold text-white tracking-tight">$4,850</span>
+                </div>
+              </div>
+              <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl">
+                <DollarSign className="w-6 h-6" />
+              </div>
+            </div>
+            <p className="text-xs text-slate-400 mt-4">Active Paid Subscriptions</p>
+          </div>
+
+          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 shadow-lg">
+            <div className="flex justify-between items-start">
+              <div className="space-y-2">
+                <p className="text-xs font-mono text-slate-400 uppercase tracking-wider">ACTIVE WORKSPACES</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-4xl font-extrabold text-white tracking-tight">312</span>
+                </div>
+              </div>
+              <div className="p-3 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl">
+                <Activity className="w-6 h-6" />
+              </div>
+            </div>
+            <p className="text-xs text-slate-400 mt-4">Node Health: 99.9% Uptime</p>
+          </div>
+        </div>
+
+        {/* Admin Quick Control Modules */}
+        <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-6 space-y-4">
+          <h3 className="text-base font-semibold text-white flex items-center gap-2">
+            <ShieldAlert className="w-5 h-5 text-rose-400" />
+            Super Admin Control Center
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="p-4 bg-slate-900 border border-slate-800 rounded-xl space-y-2">
+              <h4 className="text-xs font-mono uppercase text-indigo-400 font-bold">RBAC & Permissions</h4>
+              <p className="text-xs text-slate-400">Manage user access rights and security tokens.</p>
+            </div>
+            <div className="p-4 bg-slate-900 border border-slate-800 rounded-xl space-y-2">
+              <h4 className="text-xs font-mono uppercase text-emerald-400 font-bold">SEO & GEO Indexing</h4>
+              <p className="text-xs text-slate-400">Configure search keyword weights and web crawlers.</p>
+            </div>
+            <div className="p-4 bg-slate-900 border border-slate-800 rounded-xl space-y-2">
+              <h4 className="text-xs font-mono uppercase text-amber-400 font-bold">System Telemetry</h4>
+              <p className="text-xs text-slate-400">Monitor live logs, API latency, and database health.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ==========================================
+  // 📚 STUDENT PORTAL VIEW (If Role is STUDENT)
+  // ==========================================
   return (
     <div className="space-y-8 max-w-7xl mx-auto pb-12">
       {/* SaaS Enterprise Banner Header */}
@@ -108,11 +237,11 @@ export default function OverviewPage() {
           <div>
             <div className="flex items-center gap-2 mb-2">
               <span className="px-3 py-1 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-xs rounded-full font-mono font-medium uppercase tracking-wider">
-                Role: {profile?.role || 'STUDENT'}
+                Role: {userRole}
               </span>
             </div>
             <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
-              Good day, {profile?.displayName || user?.email?.split('@')[0] || 'Arhaam'}! 👋
+              Good day, {profile?.displayName || user?.email?.split('@')[0] || 'Student'}! 👋
             </h1>
             <p className="text-slate-400 text-sm sm:text-base mt-1">
               Here is your live academic overview and workspace summary for OnyxStack Labs.
