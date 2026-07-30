@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useAuth } from '@/context/AuthContext';
+import { DEFAULT_ROLE_REDIRECTS } from '@/lib/rbac';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -11,21 +12,10 @@ export default function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [debugInfo, setDebugInfo] = useState(''); // 🔧 TEMPORARY DEBUG - remove after fix confirmed
   const [loading, setLoading] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<'STUDENT' | 'ADMIN'>('STUDENT');
 
-  const { signInWithGoogle, switchRole } = useAuth();
+  const { signInWithGoogle } = useAuth();
   const router = useRouter();
-
-  const handleRoleSelect = (role: 'STUDENT' | 'ADMIN') => {
-    setSelectedRole(role);
-    if (role === 'ADMIN') {
-      setEmail('admin@onyxstacklabs.com');
-    } else {
-      setEmail('student@onyxstacklabs.com');
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,16 +23,13 @@ export default function LoginForm() {
     setLoading(true);
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      if (switchRole) {
-        await switchRole(selectedRole);
-      }
+      const credential = await signInWithEmailAndPassword(auth, email, password);
       router.refresh();
-      if (selectedRole === 'ADMIN' || email.includes('admin')) {
-        router.push('/dashboard/admin');
-      } else {
-        router.push('/dashboard');
-      }
+      // Role is resolved by AuthContext from Firestore — never chosen at login.
+      // We don't have the resolved profile synchronously here yet, so send
+      // everyone to a neutral redirector that AuthContext-aware routing
+      // (middleware/ProtectedRoute) will bounce to the correct dashboard.
+      router.push('/dashboard');
     } catch (err: any) {
       setError(err.message || 'Failed to sign in');
       setLoading(false);
@@ -51,61 +38,21 @@ export default function LoginForm() {
 
   const handleGoogleSignIn = async () => {
     setError('');
-    setDebugInfo('Step 1: Button clicked ✓'); // 🔧 TEMPORARY DEBUG
     setLoading(true);
     try {
-      setDebugInfo('Step 2: Calling signInWithGoogle...'); // 🔧 TEMPORARY DEBUG
       await signInWithGoogle();
-      setDebugInfo('Step 3: signInWithGoogle resolved ✓'); // 🔧 TEMPORARY DEBUG
       router.refresh();
       router.push('/dashboard');
     } catch (err: any) {
-      setDebugInfo(''); // 🔧 TEMPORARY DEBUG
-      setError(`Google sign-in error: ${err?.code || 'unknown'} — ${err?.message || 'Failed to sign in with Google'}`);
+      setError(err.message || 'Failed to sign in with Google');
       setLoading(false);
     }
   };
 
   return (
     <div className="w-full max-w-md p-8 bg-slate-900 rounded-xl border border-slate-800 shadow-2xl text-white">
-      <h2 className="text-2xl font-bold text-center mb-4 text-indigo-400">Sign In to OnyxStack</h2>
-
-      <div className="mb-6 space-y-1.5">
-        <label className="text-[11px] font-mono text-slate-400 uppercase tracking-wider block text-center">
-          Select Login Persona
-        </label>
-        <div className="grid grid-cols-2 gap-2 bg-slate-950 p-1 rounded-lg border border-slate-800">
-          <button
-            type="button"
-            onClick={() => handleRoleSelect('STUDENT')}
-            className={`py-1.5 rounded-md text-xs font-semibold transition ${
-              selectedRole === 'STUDENT'
-                ? 'bg-indigo-600 text-white shadow'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            Student
-          </button>
-          <button
-            type="button"
-            onClick={() => handleRoleSelect('ADMIN')}
-            className={`py-1.5 rounded-md text-xs font-semibold transition ${
-              selectedRole === 'ADMIN'
-                ? 'bg-rose-600 text-white shadow'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            Super Admin
-          </button>
-        </div>
-      </div>
-
-      {/* 🔧 TEMPORARY DEBUG BANNER - remove after fix confirmed */}
-      {debugInfo && (
-        <div className="mb-4 p-3 bg-blue-500/10 border border-blue-500 text-blue-300 text-xs font-mono rounded-lg">
-          {debugInfo}
-        </div>
-      )}
+      <h2 className="text-2xl font-bold text-center mb-1 text-indigo-400">Welcome back</h2>
+      <p className="text-center text-sm text-slate-400 mb-6">Sign in to continue to OnyxStack</p>
 
       {error && (
         <div className="mb-4 p-3 bg-red-500/10 border border-red-500 text-red-400 text-sm rounded-lg break-words">
@@ -122,7 +69,7 @@ export default function LoginForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white"
-            placeholder={selectedRole === 'ADMIN' ? 'admin@onyxstacklabs.com' : 'student@onyxstacklabs.com'}
+            placeholder="you@example.com"
           />
         </div>
 
@@ -140,20 +87,16 @@ export default function LoginForm() {
 
         <div className="flex items-center justify-between text-sm">
           <Link href="/forgot-password" className="text-indigo-400 hover:underline">
-            Forgot Password?
+            Forgot password?
           </Link>
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className={`w-full py-2.5 transition font-medium rounded-lg disabled:opacity-50 text-white ${
-            selectedRole === 'ADMIN'
-              ? 'bg-rose-600 hover:bg-rose-500'
-              : 'bg-indigo-600 hover:bg-indigo-500'
-          }`}
+          className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 transition font-medium rounded-lg disabled:opacity-50 text-white"
         >
-          {loading ? 'Signing In...' : `Sign In as ${selectedRole === 'ADMIN' ? 'Super Admin' : 'Student'}`}
+          {loading ? 'Signing in...' : 'Sign In'}
         </button>
       </form>
 
@@ -172,13 +115,13 @@ export default function LoginForm() {
         disabled={loading}
         className="w-full py-2.5 border border-slate-700 hover:bg-slate-800 transition font-medium rounded-lg flex items-center justify-center gap-2 disabled:opacity-50"
       >
-        <span>Google</span>
+        <span>Continue with Google</span>
       </button>
 
       <p className="mt-6 text-center text-sm text-slate-400">
         Don&apos;t have an account?{' '}
         <Link href="/register" className="text-indigo-400 hover:underline font-medium">
-          Register
+          Create one
         </Link>
       </p>
     </div>
