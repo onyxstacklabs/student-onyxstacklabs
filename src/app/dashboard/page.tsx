@@ -207,3 +207,103 @@ function StudentOverview() {
                 <FileText className="w-6 h-6" />
               </div>
             </div>
+
+            <div className="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-emerald-400 font-medium">
+              <span>Access notes workspace</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
+            </div>
+          </div>
+        </Link>
+      </div>
+
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-6 shadow-2xl space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-indigo-400" />
+                Manage Academic Courses
+              </h3>
+              <button 
+                onClick={() => setIsModalOpen(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white bg-slate-800/50 hover:bg-slate-800 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateCourse} className="space-y-4">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-slate-400">Course Title</label>
+                <input 
+                  type="text"
+                  placeholder="e.g., Cloud Architecture & DevOps"
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-slate-400">Course Code (Optional)</label>
+                <input 
+                  type="text"
+                  placeholder="e.g., CS-402"
+                  value={newCode}
+                  onChange={(e) => setNewCode(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white uppercase font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={submitting}
+                className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm rounded-xl transition shadow-lg shadow-indigo-600/20 disabled:opacity-50"
+              >
+                {submitting ? 'Adding...' : 'Add & Enroll Course'}
+              </button>
+            </form>
+
+            <div className="space-y-3 pt-4 border-t border-slate-800">
+              <h4 className="text-xs font-mono uppercase tracking-wider text-slate-400">Your Enrolled Courses</h4>
+              <div className="max-h-48 overflow-y-auto space-y-2 pr-1">
+                {coursesLoading ? (
+                  <p className="text-xs text-slate-500 py-4 text-center">Loading courses...</p>
+                ) : courses.length === 0 ? (
+                  <p className="text-xs text-slate-500 py-4 text-center">No courses added yet.</p>
+                ) : (
+                  courses.map((c) => (
+                    <div key={c.id} className="flex items-center justify-between p-3 bg-slate-950 border border-slate-800 rounded-xl">
+                      <div>
+                        <p className="text-xs font-bold text-white">{c.title}</p>
+                        <span className="text-[10px] font-mono text-indigo-400">{c.code}</span>
+                      </div>
+                      <button
+                        onClick={() => toggleEnrollment(c.id, c.enrolled)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+                          c.enrolled 
+                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
+                            : 'bg-slate-800 text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        {c.enrolled ? <span className="flex items-center gap-1"><Check className="w-3 h-3" /> Enrolled</span> : 'Join'}
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function OverviewPage() {
+  return (
+    <ProtectedRoute allowedRoles={['STUDENT', 'PARENT', 'TEACHER']}>
+      <StudentOverview />
+    </ProtectedRoute>
+  );
+}
