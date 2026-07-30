@@ -34,7 +34,7 @@ function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise
   return Promise.race([
     promise,
     new Promise<T>((_, reject) =>
-      setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms)
+      setTimeout(() => reject(new Error(`${label} operational window exceeded (${ms}ms)`)), ms)
     ),
   ]);
 }
@@ -48,12 +48,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     let mounted = true;
 
-    // Hard fallback: Force stop loading state after 2.5s unconditionally
+    // Hard fallback: Safety window to prevent indefinite UI lock
     const hardTimeout = setTimeout(() => {
       if (mounted) {
         setLoading((currentLoading) => {
           if (currentLoading) {
-            console.warn('⚠️ Force terminating hanging Auth loading state after timeout.');
+            console.warn('[AuthContext] Session synchronization safety window closed.');
           }
           return false;
         });
@@ -80,7 +80,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               const newProfile: UserProfile = {
                 uid: firebaseUser.uid,
                 email: firebaseUser.email || '',
-                displayName: firebaseUser.displayName || 'User',
+                displayName: firebaseUser.displayName || 'Student',
                 photoURL: firebaseUser.photoURL || '',
                 role: 'STUDENT',
                 preferences: {
@@ -92,16 +92,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
               };
-              await withTimeout(setDoc(userDocRef, newProfile), 2500, 'Firestore Create Profile');
+              await withTimeout(setDoc(userDocRef, newProfile), 2500, 'Firestore Profile Initialization');
               if (mounted) setProfile(newProfile);
             }
-          } catch (err: any) {
-            console.error('Firestore Error/Fallback engaged:', err);
+          } catch (err: unknown) {
+            console.error('[AuthContext] Profile verification error:', err);
             if (mounted) {
               setProfile({
                 uid: firebaseUser.uid,
                 email: firebaseUser.email || '',
-                displayName: firebaseUser.displayName || 'User',
+                displayName: firebaseUser.displayName || 'Student',
                 photoURL: firebaseUser.photoURL || '',
                 role: 'STUDENT',
                 preferences: {
@@ -123,10 +123,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (mounted) setLoading(false);
       },
       (err) => {
-        console.error('Auth Listener Error:', err);
+        console.error('[AuthContext] Authentication state handler failure:', err);
         clearTimeout(hardTimeout);
         if (mounted) {
-          setError(err.message || 'Authentication error');
+          setError(err.message || 'Identity service unavailable');
           setLoading(false);
         }
       }
@@ -140,14 +140,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const logout = async () => {
-    await firebaseSignOut(auth);
-    setUser(null);
-    setProfile(null);
+    try {
+      await firebaseSignOut(auth);
+      setUser(null);
+      setProfile(null);
+    } catch (err: unknown) {
+      console.error('[AuthContext] Logout failed:', err);
+    }
   };
 
   const signInWithGoogle = async () => {
-    const provider = new GoogleAuthProvider();
-    await signInWithPopup(auth, provider);
+    try {
+      setError(null);
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+    } catch (err: unknown) {
+      const authErr = err as { message?: string };
+      console.error('[AuthContext] Google sign-in failed:', authErr);
+      setError(authErr.message || 'Google sign-in procedure interrupted');
+    }
   };
 
   return (
