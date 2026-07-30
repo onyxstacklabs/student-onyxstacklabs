@@ -12,52 +12,70 @@ export default function DashboardPage() {
   // Loading State
   if (loading) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3">
+        <div className="w-8 h-8 border-2 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin" />
+        <span className="text-xs text-slate-400 font-mono">Syncing Portal Overview...</span>
       </div>
     );
   }
 
   const userRole = profile?.role || 'STUDENT';
 
-  // Dedicated Views according to Role (No mixed layout)
+  // Dedicated View for SUPER_ADMIN & ADMIN
   if (userRole === 'SUPER_ADMIN' || userRole === 'ADMIN') {
     return (
-      <div className="p-8 bg-slate-900/50 border border-slate-800 rounded-2xl text-center space-y-4">
-        <h2 className="text-xl font-bold text-white">System Administration & Multi-Tenant Portal</h2>
-        <p className="text-sm text-slate-400">
-          Logged in as <span className="text-indigo-400 font-semibold">{userRole}</span>. Manage tenants, users, and security logs from governance settings.
+      <div className="p-8 bg-slate-900/50 border border-slate-800 rounded-2xl text-center space-y-4 max-w-4xl mx-auto my-8">
+        <div className="w-12 h-12 rounded-xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 font-bold mx-auto text-xl">
+          🛡️
+        </div>
+        <h2 className="text-xl font-bold text-white tracking-tight">
+          System Administration & Governance Hub
+        </h2>
+        <p className="text-sm text-slate-400 max-w-md mx-auto">
+          Logged in as <span className="text-indigo-400 font-semibold font-mono">{userRole}</span>. Manage workspace tenants, security policies, and access logs from the governance portal.
         </p>
       </div>
     );
   }
 
+  // Dedicated View for PARENT
   if (userRole === 'PARENT') {
     return (
-      <div className="p-8 bg-slate-900/50 border border-slate-800 rounded-2xl text-center space-y-4">
-        <h2 className="text-xl font-bold text-white">Parent Guardian Portal</h2>
-        <p className="text-sm text-slate-400">
-          Logged in as <span className="text-indigo-400 font-semibold">PARENT</span>. Student performance and attendance metrics will be mapped to linked wards.
+      <div className="p-8 bg-slate-900/50 border border-slate-800 rounded-2xl text-center space-y-4 max-w-4xl mx-auto my-8">
+        <div className="w-12 h-12 rounded-xl bg-emerald-600/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold mx-auto text-xl">
+          👨‍👩‍👧
+        </div>
+        <h2 className="text-xl font-bold text-white tracking-tight">
+          Parent & Guardian Monitoring Hub
+        </h2>
+        <p className="text-sm text-slate-400 max-w-md mx-auto">
+          Logged in as <span className="text-emerald-400 font-semibold font-mono">PARENT</span>. Academic performance, attendance records, and mobility logs are synced for your linked wards.
         </p>
       </div>
     );
   }
+
+  // Time-based greeting helper
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
 
   // Default STUDENT Dashboard Layout
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Welcome Banner */}
-      <div className="p-6 bg-gradient-to-r from-indigo-900/40 via-slate-900 to-slate-900 border border-indigo-500/20 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="p-6 bg-gradient-to-r from-indigo-950/60 via-slate-900 to-slate-900 border border-indigo-500/20 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-xl">
         <div>
           <h1 className="text-2xl font-bold text-white tracking-tight">
-            Welcome back, {profile?.displayName || 'Student'}! 👋
+            {greeting}, {profile?.displayName || 'Student'}! 👋
           </h1>
           <p className="text-xs text-slate-400 mt-1">
-            Here is what’s happening with your learning portal today.
+            Here is your live academic overview and workspace summary for today.
           </p>
         </div>
-        <div className="px-3 py-1.5 bg-indigo-500/10 border border-indigo-500/20 rounded-lg text-xs font-semibold text-indigo-400 shrink-0">
-          Role: {userRole}
+        <div className="flex items-center gap-2">
+          <div className="px-3 py-1.5 bg-indigo-500/10 border border-indigo-500/20 rounded-lg text-xs font-semibold text-indigo-400 font-mono shrink-0">
+            Role: {userRole}
+          </div>
         </div>
       </div>
 
