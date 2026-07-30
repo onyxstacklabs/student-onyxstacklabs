@@ -19,13 +19,14 @@ interface NavItem {
   href: string;
   icon: React.ReactNode;
   adminOnly?: boolean;
+  studentOnly?: boolean;
 }
 
-const baseNavItems: NavItem[] = [
+const navItems: NavItem[] = [
   { label: 'Overview', href: '/dashboard', icon: <LayoutDashboard className="w-4 h-4 text-indigo-400" /> },
-  { label: 'AI Assistant', href: '/dashboard/ai-assistant', icon: <Bot className="w-4 h-4 text-indigo-400" /> },
-  { label: 'Notes Workspace', href: '/dashboard/notes', icon: <FileText className="w-4 h-4 text-emerald-400" /> },
-  { label: 'Campus Mobility', href: '/dashboard/mobility', icon: <Compass className="w-4 h-4 text-amber-400" /> },
+  { label: 'AI Assistant', href: '/dashboard/ai-assistant', icon: <Bot className="w-4 h-4 text-indigo-400" />, studentOnly: true },
+  { label: 'Notes Workspace', href: '/dashboard/notes', icon: <FileText className="w-4 h-4 text-emerald-400" />, studentOnly: true },
+  { label: 'Campus Mobility', href: '/dashboard/mobility', icon: <Compass className="w-4 h-4 text-amber-400" />, studentOnly: true },
   { label: 'Safety & Portal', href: '/dashboard/governance', icon: <ShieldAlert className="w-4 h-4 text-rose-400" /> },
   { label: 'Settings', href: '/dashboard/settings', icon: <Settings className="w-4 h-4 text-slate-400" /> },
 ];
@@ -37,6 +38,12 @@ export default function Sidebar() {
   // Use reliable fallback to context role
   const userRole = role || profile?.role || 'STUDENT';
   const isAdmin = userRole === 'ADMIN';
+
+  // Filter items based on role
+  const filteredNavItems = navItems.filter(item => {
+    if (isAdmin && item.studentOnly) return false;
+    return true;
+  });
 
   return (
     <aside className="hidden md:flex flex-col w-64 border-r border-slate-800 bg-slate-900/60 p-4 shrink-0 justify-between h-full select-none">
@@ -82,7 +89,7 @@ export default function Sidebar() {
             Platform Workspaces
           </div>
 
-          {baseNavItems.map((item) => {
+          {filteredNavItems.map((item) => {
             const isActive = pathname === item.href;
             return (
               <Link
