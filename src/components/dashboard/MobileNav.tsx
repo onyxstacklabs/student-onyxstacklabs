@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
+import { ShieldCheck } from 'lucide-react';
 
 interface NavItem {
   label: string;
@@ -21,13 +23,17 @@ const navItems: NavItem[] = [
 
 export default function MobileNav() {
   const pathname = usePathname();
+  const { profile, role } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
+
+  const userRole = role || profile?.role || 'STUDENT';
+  const isAdmin = userRole === 'ADMIN';
 
   return (
     <>
       {/* Mobile Top Bar Navigation Header */}
       <div className="md:hidden flex items-center justify-between px-4 py-3 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 sticky top-0 z-30">
-        <Link href="/dashboard" className="flex items-center gap-2">
+        <Link href={isAdmin ? "/dashboard/admin" : "/dashboard"} className="flex items-center gap-2">
           <div className="h-7 w-7 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-white text-xs shadow-md shadow-indigo-500/20">
             O
           </div>
@@ -80,7 +86,7 @@ export default function MobileNav() {
                   OnyxStack Labs
                 </h2>
                 <span className="text-[10px] text-slate-400 font-mono">
-                  Student Portal
+                  {isAdmin ? 'Super Admin Portal' : 'Student Portal'}
                 </span>
               </div>
             </div>
@@ -94,6 +100,27 @@ export default function MobileNav() {
           </div>
 
           <nav className="space-y-1">
+            {/* Admin Control Link inside Mobile Menu */}
+            {isAdmin && (
+              <div className="mb-4 space-y-1">
+                <div className="text-[10px] uppercase tracking-wider text-rose-400 font-bold px-3 mb-1 font-mono">
+                  Admin Control
+                </div>
+                <Link
+                  href="/dashboard/admin"
+                  onClick={() => setIsOpen(false)}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                    pathname === '/dashboard/admin'
+                      ? 'bg-rose-500/15 text-rose-300 border border-rose-500/30'
+                      : 'text-rose-400/80 hover:text-rose-200 hover:bg-slate-800/50'
+                  }`}
+                >
+                  <ShieldCheck className="w-4 h-4 text-rose-400" />
+                  <span>Admin Dashboard</span>
+                </Link>
+              </div>
+            )}
+
             <div className="text-[10px] uppercase tracking-wider text-slate-500 font-bold px-3 mb-2 font-mono">
               Workspaces
             </div>
@@ -121,9 +148,13 @@ export default function MobileNav() {
         {/* System Badge */}
         <div className="p-3 bg-slate-950/70 border border-slate-800/80 rounded-xl text-xs text-slate-400 space-y-1">
           <div className="flex items-center justify-between">
-            <span className="font-semibold text-slate-200">Mobile Context</span>
-            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              Active
+            <span className="font-semibold text-slate-200">System Role</span>
+            <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono uppercase font-bold ${
+              userRole === 'ADMIN' 
+                ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+            }`}>
+              {userRole}
             </span>
           </div>
           <p className="text-[10px] text-slate-500 font-mono">v1.0.0 Enterprise</p>
