@@ -15,21 +15,27 @@ export default function DashboardLayout({
   return (
     <AuthProvider>
       <ProtectedRoute>
-        <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col md:flex-row overflow-hidden">
-          {/* Mobile Navigation Drawer & Toggle */}
+        <div className="h-screen w-full bg-slate-950 text-slate-100 flex flex-col md:flex-row overflow-hidden antialiased">
+          {/* Mobile View Navigation Header */}
           <MobileNav />
 
-          {/* Desktop Sidebar Component */}
+          {/* Desktop View Sidebar Navigation */}
           <Sidebar />
 
-          {/* Main Content Area Container */}
-          <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-            {/* Top Navigation Component */}
+          {/* Core Content Container */}
+          <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+            {/* Header & User Controls */}
             <TopNav />
 
-            {/* Main Scrollable Area */}
-            <main className="flex-1 overflow-y-auto p-4 md:p-6 focus:outline-none">
-              {children}
+            {/* Scrollable Viewport Area */}
+            <main 
+              id="main-content"
+              tabIndex={-1}
+              className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 focus:outline-none"
+            >
+              <div className="max-w-7xl mx-auto space-y-6">
+                {children}
+              </div>
             </main>
           </div>
         </div>
