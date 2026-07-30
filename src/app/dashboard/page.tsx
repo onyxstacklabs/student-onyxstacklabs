@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { 
@@ -8,57 +8,106 @@ import {
   Clock, 
   CheckCircle2, 
   ArrowRight, 
-  Sparkles, 
   Plus, 
-  TrendingUp,
-  X
+  X,
+  Sparkles,
+  Check
 } from 'lucide-react';
+
+interface CustomCourse {
+  id: string;
+  title: string;
+  code: string;
+  enrolled: boolean;
+}
 
 export default function OverviewPage() {
   const { user, profile } = useAuth();
   
-  // Interactive Local State for Production Mocking
-  const [coursesCount, setCoursesCount] = useState(0);
-  const [hoursLearned, setHoursLearned] = useState(0);
-  const [assignments, setAssignments] = useState({ completed: 0, total: 0 });
+  // Dynamic Local Storage Sync for Courses & Notes
+  const [courses, setCourses] = useState<CustomCourse[]>([]);
+  const [notesCount, setNotesCount] = useState(0);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   
-  // Modal state for quick course enrollment
-  const [isEnrollModalOpen, setIsEnrollModalOpen] = useState(false);
+  // New Course Inputs
+  const [newTitle, setNewTitle] = useState('');
+  const [newCode, setNewCode] = useState('');
 
-  const handleQuickEnroll = (courseName: string) => {
-    setCoursesCount((prev) => prev + 1);
-    setHoursLearned((prev) => prev + 2.5);
-    setAssignments((prev) => ({ completed: prev.completed, total: prev.total + 2 }));
-    setIsEnrollModalOpen(false);
+  // Sync state on page load
+  useEffect(() => {
+    // Sync Courses
+    const savedCourses = localStorage.getItem('onyx_student_courses');
+    if (savedCourses) {
+      setCourses(JSON.parse(savedCourses));
+    } else {
+      const initial = [
+        { id: '1', title: 'Data Structures & Algorithms', code: 'CS-201', enrolled: true },
+        { id: '2', title: 'Database Management Systems', code: 'CS-303', enrolled: false }
+      ];
+      setCourses(initial);
+      localStorage.setItem('onyx_student_courses', JSON.stringify(initial));
+    }
+
+    // Sync Notes count
+    const savedNotes = localStorage.getItem('onyx_student_notes');
+    if (savedNotes) {
+      try {
+        const parsed = JSON.parse(savedNotes);
+        setNotesCount(parsed.length);
+      } catch(e){}
+    }
+  }, []);
+
+  const saveCoursesToStorage = (updated: CustomCourse[]) => {
+    setCourses(updated);
+    localStorage.setItem('onyx_student_courses', JSON.stringify(updated));
   };
+
+  // Toggle Enroll Status
+  const toggleEnroll = (id: string) => {
+    const updated = courses.map(c => c.id === id ? { ...c, enrolled: !c.enrolled } : c);
+    saveCoursesToStorage(updated);
+  };
+
+  // Create Custom Course
+  const handleCreateCourse = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTitle.trim()) return;
+
+    const newCourse: CustomCourse = {
+      id: Date.now().toString(),
+      title: newTitle,
+      code: newCode.toUpperCase() || 'GENERAL',
+      enrolled: true,
+    };
+
+    saveCoursesToStorage([newCourse, ...courses]);
+    setNewTitle('');
+    setNewCode('');
+  };
+
+  const enrolledCount = courses.filter(c => c.enrolled).length;
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto pb-12">
       {/* Header Banner */}
       <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 sm:p-8 backdrop-blur-xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl -z-10 pointer-events-none" />
-        
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="px-3 py-1 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-xs rounded-full font-mono font-medium uppercase tracking-wider">
-                Role: {profile?.role || 'STUDENT'}
-              </span>
-            </div>
-            <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
+            <span className="px-3 py-1 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-xs rounded-full font-mono uppercase">
+              Role: {profile?.role || 'STUDENT'}
+            </span>
+            <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight mt-2">
               Good day, {profile?.displayName || user?.email?.split('@')[0] || 'Student'}! 👋
             </h1>
-            <p className="text-slate-400 text-sm sm:text-base mt-1">
-              Here is your active academic workspace summary for OnyxStack Labs.
-            </p>
           </div>
 
           <button
-            onClick={() => setIsEnrollModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm rounded-xl transition shadow-lg shadow-indigo-600/20 active:scale-95"
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm rounded-xl transition shadow-lg shadow-indigo-600/20"
           >
             <Plus className="w-4 h-4" />
-            Quick Enroll Course
+            Manage & Add Courses
           </button>
         </div>
       </div>
@@ -68,71 +117,69 @@ export default function OverviewPage() {
         
         {/* Card 1: Enrolled Courses */}
         <div 
-          onClick={() => setIsEnrollModalOpen(true)}
-          className="group cursor-pointer bg-slate-900/60 hover:bg-slate-900 border border-slate-800 hover:border-indigo-500/50 rounded-2xl p-6 transition-all duration-300 shadow-lg hover:shadow-indigo-500/10 relative overflow-hidden"
+          onClick={() => setIsModalOpen(true)}
+          className="group cursor-pointer bg-slate-900/60 hover:bg-slate-900 border border-slate-800 hover:border-indigo-500/50 rounded-2xl p-6 transition"
         >
           <div className="flex justify-between items-start">
-            <div className="space-y-2">
-              <p className="text-xs font-mono text-slate-400 uppercase tracking-wider">Enrolled Courses</p>
-              <div className="flex items-baseline gap-2">
-                <span className="text-4xl font-extrabold text-white tracking-tight">{coursesCount}</span>
-                <span className="text-slate-400 text-sm font-medium">Active</span>
+            <div>
+              <p className="text-xs font-mono text-slate-400 uppercase">Enrolled Courses</p>
+              <div className="flex items-baseline gap-2 mt-2">
+                <span className="text-4xl font-extrabold text-white">{enrolledCount}</span>
+                <span className="text-slate-400 text-sm">Active</span>
               </div>
             </div>
-            <div className="p-3 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 rounded-xl group-hover:scale-110 transition duration-300">
+            <div className="p-3 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 rounded-xl">
               <BookOpen className="w-6 h-6" />
             </div>
           </div>
           
-          <div className="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-indigo-400 font-medium">
-            <span>{coursesCount === 0 ? 'Click to enroll first course' : 'View enrolled modules'}</span>
+          <div className="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between text-xs text-indigo-400">
+            <span>Manage / Create Custom Courses</span>
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
           </div>
         </div>
 
         {/* Card 2: Hours Learned */}
         <Link href="/dashboard/ai-assistant" className="block group">
-          <div className="bg-slate-900/60 hover:bg-slate-900 border border-slate-800 hover:border-amber-500/50 rounded-2xl p-6 transition-all duration-300 shadow-lg hover:shadow-amber-500/10">
+          <div className="bg-slate-900/60 hover:bg-slate-900 border border-slate-800 hover:border-amber-500/50 rounded-2xl p-6 transition">
             <div className="flex justify-between items-start">
-              <div className="space-y-2">
-                <p className="text-xs font-mono text-slate-400 uppercase tracking-wider">Hours Learned</p>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-extrabold text-white tracking-tight">{hoursLearned}</span>
-                  <span className="text-slate-400 text-sm font-medium">hrs</span>
+              <div>
+                <p className="text-xs font-mono text-slate-400 uppercase">Hours Learned</p>
+                <div className="flex items-baseline gap-2 mt-2">
+                  <span className="text-4xl font-extrabold text-white">{(enrolledCount * 3.5).toFixed(1)}</span>
+                  <span className="text-slate-400 text-sm">hrs</span>
                 </div>
               </div>
-              <div className="p-3 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl group-hover:scale-110 transition duration-300">
+              <div className="p-3 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl">
                 <Clock className="w-6 h-6" />
               </div>
             </div>
 
-            <div className="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-amber-400 font-medium">
+            <div className="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between text-xs text-amber-400">
               <span>Study with AI Assistant</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
             </div>
           </div>
         </Link>
 
-        {/* Card 3: Assignments */}
+        {/* Card 3: Saved Notes / Tasks */}
         <Link href="/dashboard/notes" className="block group">
-          <div className="bg-slate-900/60 hover:bg-slate-900 border border-slate-800 hover:border-emerald-500/50 rounded-2xl p-6 transition-all duration-300 shadow-lg hover:shadow-emerald-500/10">
+          <div className="bg-slate-900/60 hover:bg-slate-900 border border-slate-800 hover:border-emerald-500/50 rounded-2xl p-6 transition">
             <div className="flex justify-between items-start">
-              <div className="space-y-2">
-                <p className="text-xs font-mono text-slate-400 uppercase tracking-wider">Assignments</p>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-extrabold text-white tracking-tight">
-                    {assignments.completed} / {assignments.total}
-                  </span>
-                  <span className="text-slate-400 text-sm font-medium">Tasks</span>
+              <div>
+                <p className="text-xs font-mono text-slate-400 uppercase">Saved Notes</p>
+                <div className="flex items-baseline gap-2 mt-2">
+                  <span className="text-4xl font-extrabold text-white">{notesCount}</span>
+                  <span className="text-slate-400 text-sm">Notes</span>
                 </div>
               </div>
-              <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl group-hover:scale-110 transition duration-300">
+              <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl">
                 <CheckCircle2 className="w-6 h-6" />
               </div>
             </div>
 
-            <div className="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-emerald-400 font-medium">
-              <span>Manage in Notes Workspace</span>
+            <div className="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between text-xs text-emerald-400">
+              <span>Open Notes Workspace</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
             </div>
           </div>
@@ -140,62 +187,68 @@ export default function OverviewPage() {
 
       </div>
 
-      {/* Quick Navigation Action Hub */}
-      <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-6">
-        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-indigo-400" />
-          Quick Actions & Workspaces
-        </h3>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <Link href="/dashboard/ai-assistant" className="p-4 bg-slate-900 border border-slate-800 hover:border-indigo-500/40 rounded-xl text-center text-sm font-medium text-slate-300 hover:text-white transition">
-            🤖 AI Tutor
-          </Link>
-          <Link href="/dashboard/notes" className="p-4 bg-slate-900 border border-slate-800 hover:border-indigo-500/40 rounded-xl text-center text-sm font-medium text-slate-300 hover:text-white transition">
-            📝 Notes Hub
-          </Link>
-          <Link href="/dashboard/mobility" className="p-4 bg-slate-900 border border-slate-800 hover:border-indigo-500/40 rounded-xl text-center text-sm font-medium text-slate-300 hover:text-white transition">
-            📍 Mobility Pass
-          </Link>
-          <Link href="/dashboard/settings" className="p-4 bg-slate-900 border border-slate-800 hover:border-indigo-500/40 rounded-xl text-center text-sm font-medium text-slate-300 hover:text-white transition">
-            ⚙️ Account Profile
-          </Link>
-        </div>
-      </div>
-
-      {/* Quick Enroll Modal */}
-      {isEnrollModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-6">
+      {/* Interactive Modal: Add & Select Courses */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-lg w-full shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
                 <BookOpen className="w-5 h-5 text-indigo-400" />
-                Enroll in a Course
+                Course Manager
               </h3>
-              <button 
-                onClick={() => setIsEnrollModalOpen(false)}
-                className="text-slate-400 hover:text-white p-1"
-              >
+              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-white">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <p className="text-sm text-slate-400">
-              Select a featured course module from OnyxStack Labs to join instantly:
-            </p>
+            {/* Custom Course Form */}
+            <form onSubmit={handleCreateCourse} className="p-4 bg-slate-950 border border-slate-800 rounded-xl space-y-3">
+              <p className="text-xs font-mono text-indigo-400 uppercase">➕ Create Custom Course</p>
+              <div className="grid grid-cols-3 gap-2">
+                <input
+                  type="text"
+                  placeholder="Course Name (e.g. Physics)"
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
+                  className="col-span-2 bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500"
+                  required
+                />
+                <input
+                  type="text"
+                  placeholder="Code (PHY101)"
+                  value={newCode}
+                  onChange={(e) => setNewCode(e.target.value)}
+                  className="bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg transition"
+              >
+                Add & Auto-Enroll
+              </button>
+            </form>
 
+            {/* Available Courses List */}
             <div className="space-y-3">
-              {[
-                'Full-Stack Next.js 14 Enterprise Architecture',
-                'Applied AI & Prompt Engineering Fundamentals',
-                'Cloud Systems, Firebase & Vercel DevOps'
-              ].map((course, idx) => (
-                <div key={idx} className="p-4 bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 rounded-xl flex items-center justify-between transition">
-                  <span className="text-xs font-medium text-slate-200">{course}</span>
+              <p className="text-xs font-mono text-slate-400 uppercase">Select / Enroll Courses</p>
+              {courses.map((course) => (
+                <div key={course.id} className="p-3.5 bg-slate-800/50 border border-slate-700/50 rounded-xl flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] font-mono px-2 py-0.5 bg-slate-700 text-slate-300 rounded">
+                      {course.code}
+                    </span>
+                    <h4 className="text-xs font-medium text-white mt-1">{course.title}</h4>
+                  </div>
                   <button
-                    onClick={() => handleQuickEnroll(course)}
-                    className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg transition"
+                    onClick={() => toggleEnroll(course.id)}
+                    className={`px-3 py-1.5 text-xs font-semibold rounded-lg flex items-center gap-1 transition ${
+                      course.enrolled
+                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                        : 'bg-indigo-600 text-white hover:bg-indigo-500'
+                    }`}
                   >
-                    Enroll Now
+                    {course.enrolled ? <><Check className="w-3 h-3" /> Enrolled</> : 'Enroll'}
                   </button>
                 </div>
               ))}
