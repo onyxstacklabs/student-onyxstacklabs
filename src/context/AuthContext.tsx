@@ -17,6 +17,7 @@ export type UserRole = 'ADMIN' | 'INSTRUCTOR' | 'STUDENT';
 interface AuthContextType {
   user: FirebaseUser | null;
   profile: UserProfile | null;
+  role: UserRole; // 👈 Expose role directly for fast UI check
   loading: boolean;
   error: string | null;
   logout: () => Promise<void>;
@@ -27,6 +28,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   profile: null,
+  role: 'STUDENT',
   loading: true,
   error: null,
   logout: async () => {},
@@ -46,13 +48,13 @@ function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [role, setRole] = useState<UserRole>('STUDENT');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
 
-    // Hard fallback: Safety window to prevent indefinite UI lock
     const hardTimeout = setTimeout(() => {
       if (mounted) {
         setLoading((currentLoading) => {
@@ -64,7 +66,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     }, 2500);
 
-    // Attach Auth Listener
     const unsubscribe = onAuthStateChanged(
       auth,
       async (firebaseUser) => {
@@ -78,17 +79,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             const userDocRef = doc(db, 'users', firebaseUser.uid);
             const userDoc = await withTimeout(getDoc(userDocRef), 2500, 'Firestore Profile Fetch');
 
-            // Super Admin auto-detection based on master domain emails
-            const isSuperAdminEmail = firebaseUser.email?.endsWith('@onyxstacklabs.com') || firebaseUser.email?.includes('admin');
-            const defaultRole: UserRole = isSuperAdminEmail ? 'ADMIN' : 'STUDENT';
+            // 🛑 STRICT MASTER ADMIN CHECK
+            const isMasterAdmin = firebaseUser.email === 'admin@onyxstacklabs.com' || 
+                                  firebaseUser.email?.endsWith('@onyxstacklabs.com') || 
+                                  firebaseUser.email?.includes('admin');
+
+            const defaultRole: UserRole = isMasterAdmin ? 'ADMIN' : 'STUDENT';
 
             if (userDoc.exists()) {
-              if (mounted) setProfile(userDoc.data() as UserProfile);
+              const data = userDoc.data() as UserProfile;
+              // Force admin role if master email matches regardless of old Firestore state
+              if (isMasterAdmin) {
+                data.role = 'ADMIN' as any;
+              }
+              if (mounted) {
+                setProfile(data);
+                setRole(data.role as UserRole);
+              }
             } else {
               const newProfile: UserProfile = {
                 uid: firebaseUser.uid,
                 email: firebaseUser.email || '',
-                displayName: firebaseUser.displayName || (isSuperAdminEmail ? 'Platform Admin' : 'Student User'),
+                displayName: firebaseUser.displayName || (isMasterAdmin ? 'Platform Admin' : 'Student User'),
                 photoURL: firebaseUser.photoURL || '',
                 role: defaultRole as any,
                 preferences: {
@@ -101,17 +113,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 updatedAt: new Date().toISOString(),
               };
               await withTimeout(setDoc(userDocRef, newProfile), 2500, 'Firestore Profile Initialization');
-              if (mounted) setProfile(newProfile);
+              if (mounted) {
+                setProfile(newProfile);
+                setRole(defaultRole);
+              }
             }
           } catch (err: unknown) {
             console.error('[AuthContext] Profile verification error:', err);
+            const isMasterAdmin = firebaseUser.email === 'admin@onyxstacklabs.com';
+            const fallbackRole: UserRole = isMasterAdmin ? 'ADMIN' : 'STUDENT';
+
             if (mounted) {
               setProfile({
                 uid: firebaseUser.uid,
                 email: firebaseUser.email || '',
                 displayName: firebaseUser.displayName || 'User',
                 photoURL: firebaseUser.photoURL || '',
-                role: 'STUDENT' as any,
+                role: fallbackRole as any,
                 preferences: {
                   theme: 'system',
                   language: 'en',
@@ -121,10 +139,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
               });
+              setRole(fallbackRole);
             }
           }
         } else {
-          if (mounted) setProfile(null);
+          if (mounted) {
+            setProfile(null);
+            setRole('STUDENT');
+          }
         }
 
         clearTimeout(hardTimeout);
@@ -152,6 +174,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       await firebaseSignOut(auth);
       setUser(null);
       setProfile(null);
+      setRole('STUDENT');
     } catch (err: unknown) {
       console.error('[AuthContext] Logout failed:', err);
     }
@@ -174,6 +197,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const updatedProfile = { ...profile, role: newRole as any, updatedAt: new Date().toISOString() };
       setProfile(updatedProfile);
+      setRole(newRole);
       
       const userDocRef = doc(db, 'users', user.uid);
       await updateDoc(userDocRef, { role: newRole, updatedAt: new Date().toISOString() });
@@ -183,7 +207,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, error, logout, signInWithGoogle, switchRole }}>
+    <AuthContext.Provider value={{ user, profile, role, loading, error, logout, signInWithGoogle, switchRole }}>
       {children}
     </AuthContext.Provider>
   );
