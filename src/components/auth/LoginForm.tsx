@@ -12,8 +12,20 @@ export default function LoginForm() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signInWithGoogle } = useAuth();
+  const [selectedRole, setSelectedRole] = useState<'STUDENT' | 'ADMIN'>('STUDENT');
+
+  const { signInWithGoogle, switchRole } = useAuth();
   const router = useRouter();
+
+  // Quick Role Fillers for Instant Testing
+  const handleRoleSelect = (role: 'STUDENT' | 'ADMIN') => {
+    setSelectedRole(role);
+    if (role === 'ADMIN') {
+      setEmail('admin@onyxstacklabs.com');
+    } else {
+      setEmail('student@onyxstacklabs.com');
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,9 +33,22 @@ export default function LoginForm() {
     setLoading(true);
 
     try {
+      // 1. Firebase Authentication
       await signInWithEmailAndPassword(auth, email, password);
+
+      // 2. Sync Role in AuthContext if switcher exists
+      if (switchRole) {
+        await switchRole(selectedRole);
+      }
+
       router.refresh();
-      router.push('/dashboard');
+
+      // 3. Smart Redirect based on Role or Email
+      if (selectedRole === 'ADMIN' || email.includes('admin')) {
+        router.push('/dashboard/admin');
+      } else {
+        router.push('/dashboard');
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to sign in');
       setLoading(false);
@@ -45,8 +70,39 @@ export default function LoginForm() {
 
   return (
     <div className="w-full max-w-md p-8 bg-slate-900 rounded-xl border border-slate-800 shadow-2xl text-white">
-      <h2 className="text-2xl font-bold text-center mb-6 text-indigo-400">Sign In to OnyxStack</h2>
-      
+      <h2 className="text-2xl font-bold text-center mb-4 text-indigo-400">Sign In to OnyxStack</h2>
+
+      {/* Quick Role Selection Tabs for Testing */}
+      <div className="mb-6 space-y-1.5">
+        <label className="text-[11px] font-mono text-slate-400 uppercase tracking-wider block text-center">
+          Select Login Persona
+        </label>
+        <div className="grid grid-cols-2 gap-2 bg-slate-950 p-1 rounded-lg border border-slate-800">
+          <button
+            type="button"
+            onClick={() => handleRoleSelect('STUDENT')}
+            className={`py-1.5 rounded-md text-xs font-semibold transition ${
+              selectedRole === 'STUDENT'
+                ? 'bg-indigo-600 text-white shadow'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            Student
+          </button>
+          <button
+            type="button"
+            onClick={() => handleRoleSelect('ADMIN')}
+            className={`py-1.5 rounded-md text-xs font-semibold transition ${
+              selectedRole === 'ADMIN'
+                ? 'bg-rose-600 text-white shadow'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            Super Admin
+          </button>
+        </div>
+      </div>
+
       {error && (
         <div className="mb-4 p-3 bg-red-500/10 border border-red-500 text-red-400 text-sm rounded-lg">
           {error}
@@ -62,7 +118,7 @@ export default function LoginForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white"
-            placeholder="student@onyxstacklabs.com"
+            placeholder={selectedRole === 'ADMIN' ? 'admin@onyxstacklabs.com' : 'student@onyxstacklabs.com'}
           />
         </div>
 
@@ -87,9 +143,13 @@ export default function LoginForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 transition font-medium rounded-lg disabled:opacity-50"
+          className={`w-full py-2.5 transition font-medium rounded-lg disabled:opacity-50 text-white ${
+            selectedRole === 'ADMIN'
+              ? 'bg-rose-600 hover:bg-rose-500'
+              : 'bg-indigo-600 hover:bg-indigo-500'
+          }`}
         >
-          {loading ? 'Signing In...' : 'Sign In'}
+          {loading ? 'Signing In...' : `Sign In as ${selectedRole === 'ADMIN' ? 'Super Admin' : 'Student'}`}
         </button>
       </form>
 
