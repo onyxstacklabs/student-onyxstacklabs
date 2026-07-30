@@ -11,13 +11,13 @@ export default function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [debugInfo, setDebugInfo] = useState(''); // 🔧 TEMPORARY DEBUG - remove after fix confirmed
   const [loading, setLoading] = useState(false);
   const [selectedRole, setSelectedRole] = useState<'STUDENT' | 'ADMIN'>('STUDENT');
 
   const { signInWithGoogle, switchRole } = useAuth();
   const router = useRouter();
 
-  // Quick Role Fillers for Instant Testing
   const handleRoleSelect = (role: 'STUDENT' | 'ADMIN') => {
     setSelectedRole(role);
     if (role === 'ADMIN') {
@@ -33,17 +33,11 @@ export default function LoginForm() {
     setLoading(true);
 
     try {
-      // 1. Firebase Authentication
       await signInWithEmailAndPassword(auth, email, password);
-
-      // 2. Sync Role in AuthContext if switcher exists
       if (switchRole) {
         await switchRole(selectedRole);
       }
-
       router.refresh();
-
-      // 3. Smart Redirect based on Role or Email
       if (selectedRole === 'ADMIN' || email.includes('admin')) {
         router.push('/dashboard/admin');
       } else {
@@ -57,13 +51,17 @@ export default function LoginForm() {
 
   const handleGoogleSignIn = async () => {
     setError('');
+    setDebugInfo('Step 1: Button clicked ✓'); // 🔧 TEMPORARY DEBUG
     setLoading(true);
     try {
+      setDebugInfo('Step 2: Calling signInWithGoogle...'); // 🔧 TEMPORARY DEBUG
       await signInWithGoogle();
+      setDebugInfo('Step 3: signInWithGoogle resolved ✓'); // 🔧 TEMPORARY DEBUG
       router.refresh();
       router.push('/dashboard');
     } catch (err: any) {
-      setError(err.message || 'Failed to sign in with Google');
+      setDebugInfo(''); // 🔧 TEMPORARY DEBUG
+      setError(`Google sign-in error: ${err?.code || 'unknown'} — ${err?.message || 'Failed to sign in with Google'}`);
       setLoading(false);
     }
   };
@@ -72,7 +70,6 @@ export default function LoginForm() {
     <div className="w-full max-w-md p-8 bg-slate-900 rounded-xl border border-slate-800 shadow-2xl text-white">
       <h2 className="text-2xl font-bold text-center mb-4 text-indigo-400">Sign In to OnyxStack</h2>
 
-      {/* Quick Role Selection Tabs for Testing */}
       <div className="mb-6 space-y-1.5">
         <label className="text-[11px] font-mono text-slate-400 uppercase tracking-wider block text-center">
           Select Login Persona
@@ -103,8 +100,15 @@ export default function LoginForm() {
         </div>
       </div>
 
+      {/* 🔧 TEMPORARY DEBUG BANNER - remove after fix confirmed */}
+      {debugInfo && (
+        <div className="mb-4 p-3 bg-blue-500/10 border border-blue-500 text-blue-300 text-xs font-mono rounded-lg">
+          {debugInfo}
+        </div>
+      )}
+
       {error && (
-        <div className="mb-4 p-3 bg-red-500/10 border border-red-500 text-red-400 text-sm rounded-lg">
+        <div className="mb-4 p-3 bg-red-500/10 border border-red-500 text-red-400 text-sm rounded-lg break-words">
           {error}
         </div>
       )}
