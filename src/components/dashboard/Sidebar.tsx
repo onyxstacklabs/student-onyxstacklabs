@@ -32,16 +32,17 @@ const baseNavItems: NavItem[] = [
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const { profile } = useAuth();
+  const { profile, role } = useAuth(); // 👈 Directly extract active 'role' from AuthContext
 
-  const userRole = profile?.role || 'STUDENT';
+  // Use reliable fallback to context role
+  const userRole = role || profile?.role || 'STUDENT';
   const isAdmin = userRole === 'ADMIN';
 
   return (
     <aside className="hidden md:flex flex-col w-64 border-r border-slate-800 bg-slate-900/60 p-4 shrink-0 justify-between h-full select-none">
       <div className="space-y-6">
         {/* Brand Header */}
-        <Link href="/dashboard" className="flex items-center gap-3 px-2 group">
+        <Link href={isAdmin ? "/dashboard/admin" : "/dashboard"} className="flex items-center gap-3 px-2 group">
           <div className="h-9 w-9 rounded-xl bg-indigo-600 flex items-center justify-center font-black text-white shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform">
             O
           </div>
@@ -50,7 +51,7 @@ export default function Sidebar() {
               OnyxStack Labs
             </h2>
             <span className="text-[10px] text-slate-400 font-mono tracking-wide">
-              {isAdmin ? 'Admin Console' : 'Student SaaS Portal'}
+              {isAdmin ? 'Super Admin Portal' : 'Student Portal'}
             </span>
           </div>
         </Link>
