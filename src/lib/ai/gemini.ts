@@ -7,7 +7,7 @@ import {
 } from '@/types/ai';
 
 const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.GEMINI_API_KEY || '';
-const DEFAULT_MODEL = 'gemini-2.5-flash';
+const DEFAULT_MODEL = 'gemini-flash-latest';
 
 /**
  * Helper to call Google Gemini API REST endpoint securely
