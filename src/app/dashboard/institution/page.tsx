@@ -3,6 +3,7 @@
 import React from 'react';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { InstitutionOverviewCard } from '@/components/institution/InstitutionOverviewCard';
+import { EmergencyAlertsPanel } from '@/components/institution/EmergencyAlertsPanel';
 import { Building2, Settings, Users, Shield, Plus, Sparkles } from 'lucide-react';
 
 function InstitutionDashboard() {
@@ -46,6 +47,8 @@ function InstitutionDashboard() {
 
       {/* Main Content Area */}
       <div className="space-y-6">
+        <EmergencyAlertsPanel />
+
         <InstitutionOverviewCard />
 
         {/* Quick Management Cards */}
