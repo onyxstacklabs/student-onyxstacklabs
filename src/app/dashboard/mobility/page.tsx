@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import {
   Navigation,
   ShieldCheck,
@@ -13,6 +14,7 @@ import {
   Calendar,
   AlertCircle,
   SunMedium,
+  PlayCircle,
 } from 'lucide-react';
 import { useLocationPermissions } from '@/lib/mobility/useLocationPermissions';
 import { getCampusWeather, evaluateTransitSafety } from '@/lib/mobility/weatherService';
@@ -97,7 +99,6 @@ export default function SmartMobilityDashboardPage() {
   const [bookedPass, setBookedPass] = useState(false);
   const [reservedDockId, setReservedDockId] = useState<string | null>(null);
 
-  // Real weather state
   const { permissionState, coordinates, error: locationError, isLoading: locationLoading, requestPermission } =
     useLocationPermissions();
   const [weather, setWeather] = useState<WeatherCondition | null>(null);
@@ -176,13 +177,16 @@ export default function SmartMobilityDashboardPage() {
         </div>
 
         <div className="flex items-center gap-2 self-start md:self-auto">
+          <Link
+            href="/dashboard/mobility/trip"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition shadow-lg shadow-indigo-600/20"
+          >
+            <PlayCircle className="w-3.5 h-3.5" />
+            <span>Start Commute</span>
+          </Link>
           <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
             <ShieldCheck className="w-3.5 h-3.5" />
             <span>Shuttles Active</span>
-          </span>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
-            <Zap className="w-3.5 h-3.5" />
-            <span>EV Docks Ready</span>
           </span>
         </div>
       </div>
