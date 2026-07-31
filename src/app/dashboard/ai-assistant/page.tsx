@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { Bot, Send, Trash2, Sparkles, RefreshCw } from 'lucide-react';
 
 interface Message {
@@ -11,7 +12,7 @@ interface Message {
   timestamp: string;
 }
 
-export default function AIAssistantPage() {
+function AIAssistant() {
   const { profile } = useAuth();
   const studentName = profile?.displayName || 'Student';
 
@@ -25,9 +26,9 @@ export default function AIAssistantPage() {
   const [messages, setMessages] = useState<Message[]>([initialGreeting]);
   const [inputQuery, setInputQuery] = useState('');
   const [isThinking, setIsThinking] = useState(false);
+  const [error, setError] = useState('');
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom on new messages
   const scrollToBottom = () => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -35,25 +36,6 @@ export default function AIAssistantPage() {
   useEffect(() => {
     scrollToBottom();
   }, [messages, isThinking]);
-
-  // Dynamic response generator for realistic interaction
-  const generateAiResponse = (userPrompt: string): string => {
-    const lower = userPrompt.toLowerCase();
-
-    if (lower.includes('quiz') || lower.includes('question')) {
-      return `Here is a quick 3-question quiz based on your topic:\n\n1. What is the core purpose of this concept?\n2. Name two real-world applications.\n3. What is the main difference between this and alternative approaches?\n\nTry answering these in your head or type your answers here!`;
-    }
-
-    if (lower.includes('summarize') || lower.includes('summary') || lower.includes('notes')) {
-      return `Here is a simplified summary:\n\n• Key Point 1: Main concept overview.\n• Key Point 2: Critical practical rules.\n• Key Point 3: Final exam takeaway.\n\nWould you like me to save these bullet points directly to your Notes workspace?`;
-    }
-
-    if (lower.includes('explain') || lower.includes('simple')) {
-      return `In simple terms: Think of this like a post office. Data gets packed into small envelopes, labeled with an address, and sent through the fastest route. Once it arrives, it gets unpacked in order! Does that analogy make sense?`;
-    }
-
-    return `I reviewed your question about "${userPrompt}". Here is a helpful takeaway: focus on understanding the fundamental definitions first before jumping into advanced examples. Let me know if you want a step-by-step breakdown or practice flashcards!`;
-  };
 
   const handleSendMessage = async (textToSend?: string) => {
     const query = textToSend || inputQuery;
@@ -68,23 +50,49 @@ export default function AIAssistantPage() {
       timestamp: timeString,
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
     if (!textToSend) setInputQuery('');
     setIsThinking(true);
+    setError('');
 
-    // Realistic processing delay
-    setTimeout(() => {
-      const aiResponseText = generateAiResponse(query);
+    try {
+      const response = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          feature: 'chat',
+          payload: {
+            messages: updatedMessages
+              .filter((m) => m.id !== 'welcome-msg')
+              .map((m) => ({
+                role: m.sender === 'user' ? 'user' : 'assistant',
+                content: m.text,
+              })),
+            systemPrompt: `You are a friendly, encouraging AI study assistant for a student named ${studentName} on OnyxStack Labs. Help with summarizing notes, generating quizzes, and explaining concepts simply. Keep answers concise and student-friendly.`,
+          },
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || 'The AI assistant could not respond right now.');
+      }
+
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         sender: 'ai',
-        text: aiResponseText,
+        text: result.data,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
 
       setMessages((prev) => [...prev, aiMessage]);
+    } catch (err: any) {
+      setError(err.message || 'Something went wrong. Please try again.');
+    } finally {
       setIsThinking(false);
-    }, 1000);
+    }
   };
 
   const handleClearChat = () => {
@@ -95,6 +103,7 @@ export default function AIAssistantPage() {
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       },
     ]);
+    setError('');
   };
 
   const quickPrompts = [
@@ -105,7 +114,6 @@ export default function AIAssistantPage() {
 
   return (
     <div className="max-w-5xl mx-auto h-[calc(100vh-7.5rem)] flex flex-col gap-4 p-2 sm:p-0">
-      {/* Header Banner */}
       <div className="p-4 bg-slate-900/60 border border-slate-800 rounded-2xl flex items-center justify-between shrink-0 shadow-sm">
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-xl bg-purple-600/20 border border-purple-500/30 text-purple-400">
@@ -133,9 +141,7 @@ export default function AIAssistantPage() {
         </div>
       </div>
 
-      {/* Main Chat Area */}
       <div className="flex-1 bg-slate-900/60 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between overflow-hidden shadow-sm">
-        {/* Messages Stream */}
         <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar">
           {messages.map((msg) => (
             <div
@@ -168,10 +174,15 @@ export default function AIAssistantPage() {
             </div>
           )}
 
+          {error && (
+            <div className="p-2.5 bg-red-500/10 border border-red-500 text-red-400 text-xs rounded-xl w-fit">
+              {error}
+            </div>
+          )}
+
           <div ref={chatEndRef} />
         </div>
 
-        {/* Quick Suggestion Buttons & Input Bar */}
         <div className="mt-4 pt-3 border-t border-slate-800/80 space-y-3">
           <div className="flex flex-wrap gap-2">
             {quickPrompts.map((item, idx) => (
@@ -212,5 +223,13 @@ export default function AIAssistantPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AIAssistantPage() {
+  return (
+    <ProtectedRoute allowedRoles={['STUDENT', 'PARENT', 'TEACHER']}>
+      <AIAssistant />
+    </ProtectedRoute>
   );
 }
