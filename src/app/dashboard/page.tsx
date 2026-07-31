@@ -19,6 +19,7 @@ import {
   X,
   Check,
   CalendarCheck,
+  GraduationCap,
 } from 'lucide-react';
 
 interface Note {
@@ -129,7 +130,7 @@ function StudentOverview() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
         <div 
           onClick={() => setIsModalOpen(true)}
           className="group cursor-pointer bg-slate-900/60 hover:bg-slate-900 border border-slate-800 hover:border-indigo-500/50 rounded-2xl p-6 transition-all duration-300 shadow-lg hover:shadow-indigo-500/10"
@@ -223,6 +224,27 @@ function StudentOverview() {
 
             <div className="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-rose-400 font-medium">
               <span>Check your record</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
+            </div>
+          </div>
+        </Link>
+
+        <Link href="/dashboard/grades" className="block group">
+          <div className="bg-slate-900/60 hover:bg-slate-900 border border-slate-800 hover:border-violet-500/50 rounded-2xl p-6 transition-all duration-300 shadow-lg hover:shadow-violet-500/10">
+            <div className="flex justify-between items-start">
+              <div className="space-y-2">
+                <p className="text-xs font-mono text-slate-400 uppercase tracking-wider">GRADES</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-4xl font-extrabold text-white tracking-tight">View</span>
+                </div>
+              </div>
+              <div className="p-3 bg-violet-500/10 border border-violet-500/20 text-violet-400 rounded-xl group-hover:scale-110 transition duration-300">
+                <GraduationCap className="w-6 h-6" />
+              </div>
+            </div>
+
+            <div className="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-violet-400 font-medium">
+              <span>Check your GPA</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
             </div>
           </div>
