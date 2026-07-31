@@ -1,10 +1,11 @@
 'use client';
 
 import React from 'react';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { InstitutionOverviewCard } from '@/components/institution/InstitutionOverviewCard';
 import { Building2, Settings, Users, Shield, Plus, Sparkles } from 'lucide-react';
 
-export default function InstitutionDashboardPage() {
+function InstitutionDashboard() {
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-6 lg:p-8 space-y-6">
       {/* Page Header */}
@@ -25,18 +26,20 @@ export default function InstitutionDashboardPage() {
 
         <div className="flex items-center space-x-2.5 self-start md:self-auto">
           <button
-            onClick={() => alert('Department management modal opening...')}
-            className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 text-xs font-medium rounded-lg transition-colors"
+            disabled
+            title="Department management is coming soon"
+            className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-slate-900 border border-slate-800 text-slate-500 text-xs font-medium rounded-lg cursor-not-allowed"
           >
             <Plus className="w-4 h-4" />
-            <span>Add Department</span>
+            <span>Add Department (Soon)</span>
           </button>
           <button
-            onClick={() => alert('Navigating to Tenant Settings...')}
-            className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg transition-colors shadow-md shadow-indigo-950/50"
+            disabled
+            title="Workspace settings are coming soon"
+            className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-slate-900 border border-slate-800 text-slate-500 text-xs font-semibold rounded-lg cursor-not-allowed"
           >
             <Settings className="w-4 h-4" />
-            <span>Workspace Settings</span>
+            <span>Workspace Settings (Soon)</span>
           </button>
         </div>
       </div>
@@ -55,9 +58,12 @@ export default function InstitutionDashboardPage() {
             <p className="text-xs text-slate-400 leading-relaxed">
               Review active student enrollments, issue faculty invitations, and manage department access control roles.
             </p>
-            <button className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 inline-flex items-center space-x-1">
-              <span>View Active Members</span>
-              <span>→</span>
+            <button
+              disabled
+              title="Roster management is coming soon"
+              className="text-xs font-semibold text-slate-500 cursor-not-allowed inline-flex items-center space-x-1"
+            >
+              <span>View Active Members (Soon)</span>
             </button>
           </div>
 
@@ -69,13 +75,24 @@ export default function InstitutionDashboardPage() {
             <p className="text-xs text-slate-400 leading-relaxed">
               Configure institutional primary/accent color themes, upload university logos, and manage SSL certificates.
             </p>
-            <button className="text-xs font-semibold text-violet-400 hover:text-violet-300 inline-flex items-center space-x-1">
-              <span>Configure Branding</span>
-              <span>→</span>
+            <button
+              disabled
+              title="Branding configuration is coming soon"
+              className="text-xs font-semibold text-slate-500 cursor-not-allowed inline-flex items-center space-x-1"
+            >
+              <span>Configure Branding (Soon)</span>
             </button>
           </div>
         </div>
       </div>
     </main>
+  );
+}
+
+export default function InstitutionDashboardPage() {
+  return (
+    <ProtectedRoute allowedRoles={['INSTITUTION']}>
+      <InstitutionDashboard />
+    </ProtectedRoute>
   );
 }
