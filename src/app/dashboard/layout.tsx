@@ -6,6 +6,7 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import Sidebar from '@/components/dashboard/Sidebar';
 import TopNav from '@/components/dashboard/TopNav';
 import MobileNav from '@/components/dashboard/MobileNav';
+import EmergencySOSButton from '@/components/dashboard/EmergencySOSButton';
 
 export default function DashboardLayout({
   children,
@@ -38,6 +39,8 @@ export default function DashboardLayout({
               </div>
             </main>
           </div>
+
+          <EmergencySOSButton />
         </div>
       </ProtectedRoute>
     </AuthProvider>
