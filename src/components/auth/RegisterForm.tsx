@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, setDoc } from 'firebase/firestore';
@@ -8,6 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { UserProfile, BloodGroup } from '@/types/auth';
+import { listInstitutions, InstitutionOption } from '@/lib/academics/institutions';
 
 type AccountType = 'STUDENT' | 'INSTITUTION';
 
@@ -23,8 +24,10 @@ export default function RegisterForm() {
   const [phoneNumber, setPhoneNumber] = useState('');
 
   // Student fields
+  const [institutions, setInstitutions] = useState<InstitutionOption[]>([]);
+  const [institutionsLoading, setInstitutionsLoading] = useState(true);
+  const [selectedInstitutionId, setSelectedInstitutionId] = useState('');
   const [className, setClassName] = useState('');
-  const [collegeName, setCollegeName] = useState('');
   const [rollNumber, setRollNumber] = useState('');
   const [subjectsInput, setSubjectsInput] = useState('');
   const [whatsappNumber, setWhatsappNumber] = useState('');
@@ -49,6 +52,25 @@ export default function RegisterForm() {
   const { signInWithGoogle } = useAuth();
   const router = useRouter();
 
+  useEffect(() => {
+    if (accountType !== 'STUDENT') return;
+    let mounted = true;
+    setInstitutionsLoading(true);
+    listInstitutions()
+      .then((data) => {
+        if (mounted) setInstitutions(data);
+      })
+      .catch(() => {
+        if (mounted) setError('Could not load institutions list.');
+      })
+      .finally(() => {
+        if (mounted) setInstitutionsLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [accountType]);
+
   const parseList = (value: string): string[] =>
     value
       .split(',')
@@ -58,6 +80,12 @@ export default function RegisterForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (accountType === 'STUDENT' && !selectedInstitutionId) {
+      setError('Please select your institution.');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -80,13 +108,16 @@ export default function RegisterForm() {
         updatedAt: new Date().toISOString(),
       };
 
+      const selectedInstitution = institutions.find((i) => i.uid === selectedInstitutionId);
+
       const newProfile: UserProfile =
         accountType === 'STUDENT'
           ? {
               ...baseProfile,
               studentDetails: {
+                institutionId: selectedInstitutionId,
+                collegeName: selectedInstitution?.institutionName || '',
                 className,
-                collegeName,
                 rollNumber,
                 subjects: parseList(subjectsInput),
                 whatsappNumber: whatsappNumber || undefined,
@@ -222,6 +253,32 @@ export default function RegisterForm() {
         {accountType === 'STUDENT' ? (
           <div className="space-y-4 pt-2 border-t border-slate-800">
             <p className="text-xs font-mono text-slate-500 uppercase tracking-wider pt-4">Academic details</p>
+
+            <div>
+              <label className={labelClass}>Institution</label>
+              <select
+                required
+                value={selectedInstitutionId}
+                onChange={(e) => setSelectedInstitutionId(e.target.value)}
+                className={inputClass}
+                disabled={institutionsLoading}
+              >
+                <option value="">
+                  {institutionsLoading ? 'Loading institutions...' : 'Select your institution'}
+                </option>
+                {institutions.map((inst) => (
+                  <option key={inst.uid} value={inst.uid}>
+                    {inst.institutionName}
+                  </option>
+                ))}
+              </select>
+              {!institutionsLoading && institutions.length === 0 && (
+                <p className="text-xs text-amber-400 mt-1">
+                  No institutions registered yet. Ask your institution to sign up first.
+                </p>
+              )}
+            </div>
+
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className={labelClass}>Class / Grade</label>
@@ -245,17 +302,6 @@ export default function RegisterForm() {
                   placeholder="e.g., 24-CS-101"
                 />
               </div>
-            </div>
-            <div>
-              <label className={labelClass}>College / School Name</label>
-              <input
-                type="text"
-                required
-                value={collegeName}
-                onChange={(e) => setCollegeName(e.target.value)}
-                className={inputClass}
-                placeholder="e.g., Government College Lahore"
-              />
             </div>
             <div>
               <label className={labelClass}>Subjects (comma separated)</label>
