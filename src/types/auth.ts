@@ -23,6 +23,7 @@ export interface ElectricVehicleDetails {
 }
 
 export interface StudentDetails {
+  institutionId?: string;
   className: string;
   collegeName: string;
   rollNumber: string;
