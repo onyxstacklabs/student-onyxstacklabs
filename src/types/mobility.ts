@@ -42,12 +42,18 @@ export type TripStatus = 'active' | 'completed' | 'cancelled';
 
 export interface TripSession {
   id: string;
+  studentUid?: string;
+  institutionId?: string;
+  studentName?: string;
   routeId?: string;
   startTime: string;
   endTime?: string;
   distanceCoveredKm: number;
   status: TripStatus;
   averageSpeedKmh?: number;
+  currentSpeedKmh?: number;
+  waypoints?: CampusCoordinate[];
+  batteryPercentage?: number;
 }
 
 export type ChargerType = 'level_1' | 'level_2' | 'dc_fast';
