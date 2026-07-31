@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Navigation,
   ShieldCheck,
@@ -14,6 +14,9 @@ import {
   AlertCircle,
   SunMedium,
 } from 'lucide-react';
+import { useLocationPermissions } from '@/lib/mobility/useLocationPermissions';
+import { getCampusWeather, evaluateTransitSafety } from '@/lib/mobility/weatherService';
+import { WeatherCondition } from '@/types/mobility';
 
 interface RouteOption {
   id: string;
@@ -34,7 +37,8 @@ interface Station {
 }
 
 export default function SmartMobilityDashboardPage() {
-  // Routes Data State
+  // ⚠️ Routes & EV docks still mock — locked as next structural step
+  // (Institution-side location/route management needed before this can be real).
   const routes: RouteOption[] = [
     {
       id: 'r1',
@@ -62,7 +66,6 @@ export default function SmartMobilityDashboardPage() {
     },
   ];
 
-  // Charging Stations State
   const [stations, setStations] = useState<Station[]>([
     {
       id: 'st1',
@@ -93,6 +96,41 @@ export default function SmartMobilityDashboardPage() {
   const [selectedRoute, setSelectedRoute] = useState<RouteOption>(routes[0]);
   const [bookedPass, setBookedPass] = useState(false);
   const [reservedDockId, setReservedDockId] = useState<string | null>(null);
+
+  // Real weather state
+  const { permissionState, coordinates, error: locationError, isLoading: locationLoading, requestPermission } =
+    useLocationPermissions();
+  const [weather, setWeather] = useState<WeatherCondition | null>(null);
+  const [weatherLoading, setWeatherLoading] = useState(false);
+  const [weatherError, setWeatherError] = useState('');
+
+  useEffect(() => {
+    if (permissionState === 'prompt') {
+      requestPermission();
+    }
+  }, [permissionState, requestPermission]);
+
+  useEffect(() => {
+    if (!coordinates) return;
+    let mounted = true;
+    setWeatherLoading(true);
+    setWeatherError('');
+    getCampusWeather(coordinates.lat, coordinates.lng)
+      .then((data) => {
+        if (mounted) setWeather(data);
+      })
+      .catch(() => {
+        if (mounted) setWeatherError('Could not load live weather.');
+      })
+      .finally(() => {
+        if (mounted) setWeatherLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [coordinates]);
+
+  const transitSafety = weather ? evaluateTransitSafety(weather) : null;
 
   const handleBookShuttle = () => {
     setBookedPass(true);
@@ -299,25 +337,61 @@ export default function SmartMobilityDashboardPage() {
 
         {/* Right Column: Campus Weather & Travel Stats */}
         <div className="space-y-6">
-          {/* Weather Widget */}
+          {/* Weather Widget — REAL, GPS + Open-Meteo backed */}
           <div className="p-5 bg-slate-900/60 border border-slate-800 rounded-2xl space-y-3 shadow-sm">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-white flex items-center gap-1.5">
                 <SunMedium className="w-4 h-4 text-amber-400" />
                 Campus Transit Weather
               </span>
-              <span className="text-[10px] font-mono text-emerald-400">Ideal Walking</span>
+              {transitSafety && (
+                <span
+                  className={`text-[10px] font-mono ${
+                    transitSafety.isSafe ? 'text-emerald-400' : 'text-amber-400'
+                  }`}
+                >
+                  {transitSafety.isSafe ? 'Ideal Conditions' : 'Caution Advised'}
+                </span>
+              )}
             </div>
-            <div className="flex items-center justify-between bg-slate-950 p-3 rounded-xl border border-slate-800">
-              <div>
-                <p className="text-xl font-bold text-white">26°C</p>
-                <p className="text-[10px] text-slate-400">Clear Sky • Mild Breeze</p>
+
+            {permissionState === 'denied' ? (
+              <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 text-xs text-slate-400">
+                Location access denied. Enable location permissions to see live weather.
               </div>
-              <div className="text-right">
-                <p className="text-xs font-bold text-slate-300">AQI: 42</p>
-                <p className="text-[10px] text-emerald-400 font-mono">Good Quality</p>
+            ) : locationLoading || weatherLoading ? (
+              <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 text-xs text-slate-500 text-center">
+                Loading weather...
               </div>
-            </div>
+            ) : weatherError || locationError ? (
+              <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 text-xs text-red-400">
+                {weatherError || locationError}
+              </div>
+            ) : weather ? (
+              <div className="flex items-center justify-between bg-slate-950 p-3 rounded-xl border border-slate-800">
+                <div>
+                  <p className="text-xl font-bold text-white">{weather.temperatureCelsius}°C</p>
+                  <p className="text-[10px] text-slate-400">
+                    {weather.condition} • Wind {weather.windSpeedKmh} km/h
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs font-bold text-slate-300">
+                    {weather.precipitationProbability}% rain
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 text-xs text-slate-500 text-center">
+                Weather unavailable.
+              </div>
+            )}
+
+            {transitSafety && !transitSafety.isSafe && transitSafety.warningMessage && (
+              <p className="text-[11px] text-amber-300 leading-relaxed">
+                {transitSafety.warningMessage}
+              </p>
+            )}
           </div>
 
           {/* Travel Stats Summary */}
