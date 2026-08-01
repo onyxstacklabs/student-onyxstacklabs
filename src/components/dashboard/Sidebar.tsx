@@ -55,6 +55,8 @@ function getNavItems(role: UserRole): NavItem[] {
     case 'TEACHER':
       return [
         { label: 'Overview', href: '/dashboard/teacher', icon: <LayoutDashboard className="w-4 h-4 text-brand-400" /> },
+        { label: 'Mark Attendance', href: '/dashboard/teacher/attendance', icon: <CalendarCheck className="w-4 h-4 text-rose-400" /> },
+        { label: 'Enter Grades', href: '/dashboard/teacher/grades', icon: <GraduationCap className="w-4 h-4 text-violet-400" /> },
         { label: 'Settings', href: '/dashboard/settings', icon: <Settings className="w-4 h-4 text-slate-400" /> },
       ];
     case 'INSTITUTION':
@@ -89,7 +91,6 @@ export default function Sidebar() {
   return (
     <aside className="hidden md:flex flex-col w-64 border-r border-surface-border bg-surface-raised/60 p-4 shrink-0 justify-between h-full select-none">
       <div className="space-y-6">
-        {/* Brand Header */}
         <Link href={homeHref} className="flex items-center gap-3 px-2 group">
           <div className="h-9 w-9 rounded-xl bg-brand-600 flex items-center justify-center font-black text-white shadow-lg shadow-brand-500/20 group-hover:scale-105 transition-transform">
             O
