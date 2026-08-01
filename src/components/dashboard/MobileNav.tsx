@@ -40,6 +40,8 @@ function getNavItems(role: UserRole): NavItem[] {
     case 'TEACHER':
       return [
         { label: 'Overview', href: '/dashboard/teacher', icon: '📊' },
+        { label: 'Mark Attendance', href: '/dashboard/teacher/attendance', icon: '✅' },
+        { label: 'Enter Grades', href: '/dashboard/teacher/grades', icon: '🎓' },
         { label: 'Settings', href: '/dashboard/settings', icon: '⚙️' },
       ];
     case 'INSTITUTION':
