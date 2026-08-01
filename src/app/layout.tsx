@@ -4,7 +4,7 @@ import '@/styles/globals.css';
 import { PwaRegister } from '@/components/pwa/PwaRegister';
 import { SITE_CONFIG } from '@/lib/seo/metadataEngine';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 // Fallback site URL to avoid invalid URL errors during static page generation
 const baseUrl = SITE_CONFIG?.url || 'https://student.onyxstacklabs.com';
@@ -35,8 +35,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
-      <body className={`${inter.className} bg-slate-950 text-slate-100 antialiased min-h-screen`}>
+    <html lang="en" className={`dark ${inter.variable}`}>
+      <body className="font-sans bg-surface-base text-slate-100 antialiased min-h-screen">
         <PwaRegister />
         {children}
       </body>
