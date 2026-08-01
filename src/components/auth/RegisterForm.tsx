@@ -9,8 +9,10 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { UserProfile, BloodGroup } from '@/types/auth';
 import { listInstitutions, InstitutionOption } from '@/lib/academics/institutions';
+import { getTeacherInvite, consumeTeacherInvite, TeacherInvite } from '@/lib/academics/teacherInvites';
+import { CheckCircle2 } from 'lucide-react';
 
-type AccountType = 'STUDENT' | 'INSTITUTION';
+type AccountType = 'STUDENT' | 'TEACHER' | 'INSTITUTION';
 
 const BLOOD_GROUPS: BloodGroup[] = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 
@@ -46,6 +48,12 @@ export default function RegisterForm() {
   const [classesInput, setClassesInput] = useState('');
   const [semestersInput, setSemestersInput] = useState('');
 
+  // Teacher fields
+  const [inviteCode, setInviteCode] = useState('');
+  const [verifiedInvite, setVerifiedInvite] = useState<TeacherInvite | null>(null);
+  const [verifyingInvite, setVerifyingInvite] = useState(false);
+  const [inviteError, setInviteError] = useState('');
+
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -77,12 +85,39 @@ export default function RegisterForm() {
       .map((item) => item.trim())
       .filter(Boolean);
 
+  const handleVerifyInvite = async () => {
+    setInviteError('');
+    setVerifiedInvite(null);
+    if (!inviteCode.trim()) {
+      setInviteError('Please enter the invite code your institution gave you.');
+      return;
+    }
+
+    setVerifyingInvite(true);
+    try {
+      const invite = await getTeacherInvite(inviteCode.trim());
+      if (!invite) {
+        setInviteError('Invalid or already-used invite code. Please check with your institution.');
+        return;
+      }
+      setVerifiedInvite(invite);
+    } catch (err) {
+      setInviteError('Could not verify code. Please try again.');
+    } finally {
+      setVerifyingInvite(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
     if (accountType === 'STUDENT' && !selectedInstitutionId) {
       setError('Please select your institution.');
+      return;
+    }
+    if (accountType === 'TEACHER' && !verifiedInvite) {
+      setError('Please verify your invite code first.');
       return;
     }
 
@@ -108,46 +143,61 @@ export default function RegisterForm() {
         updatedAt: new Date().toISOString(),
       };
 
-      const selectedInstitution = institutions.find((i) => i.uid === selectedInstitutionId);
+      let newProfile: UserProfile;
 
-      const newProfile: UserProfile =
-        accountType === 'STUDENT'
-          ? {
-              ...baseProfile,
-              studentDetails: {
-                institutionId: selectedInstitutionId,
-                collegeName: selectedInstitution?.institutionName || '',
-                className,
-                rollNumber,
-                subjects: parseList(subjectsInput),
-                whatsappNumber: whatsappNumber || undefined,
-                parentContactNumber: parentContactNumber || undefined,
-                bloodGroup: bloodGroup || undefined,
-                electricVehicle: hasVehicle
-                  ? {
-                      hasVehicle: true,
-                      vehicleName: vehicleName || undefined,
-                      distanceFromHomeKm: distanceFromHomeKm
-                        ? Number(distanceFromHomeKm)
-                        : undefined,
-                      route: route || undefined,
-                    }
-                  : { hasVehicle: false },
-              },
-            }
-          : {
-              ...baseProfile,
-              institutionDetails: {
-                institutionName,
-                address: institutionAddress,
-                contactEmail: institutionContactEmail,
-                contactNumber: institutionContactNumber,
-                classes: parseList(classesInput),
-                semesters: parseList(semestersInput),
-              },
-            };
+      if (accountType === 'STUDENT') {
+        const selectedInstitution = institutions.find((i) => i.uid === selectedInstitutionId);
+        newProfile = {
+          ...baseProfile,
+          studentDetails: {
+            institutionId: selectedInstitutionId,
+            collegeName: selectedInstitution?.institutionName || '',
+            className,
+            rollNumber,
+            subjects: parseList(subjectsInput),
+            whatsappNumber: whatsappNumber || undefined,
+            parentContactNumber: parentContactNumber || undefined,
+            bloodGroup: bloodGroup || undefined,
+            electricVehicle: hasVehicle
+              ? {
+                  hasVehicle: true,
+                  vehicleName: vehicleName || undefined,
+                  distanceFromHomeKm: distanceFromHomeKm ? Number(distanceFromHomeKm) : undefined,
+                  route: route || undefined,
+                }
+              : { hasVehicle: false },
+          },
+        };
+      } else if (accountType === 'TEACHER' && verifiedInvite) {
+        newProfile = {
+          ...baseProfile,
+          teacherDetails: {
+            institutionId: verifiedInvite.institutionId,
+            assignedClasses: verifiedInvite.assignedClasses,
+            subjects: verifiedInvite.subjects,
+            phoneNumber: phoneNumber || undefined,
+          },
+        };
+      } else {
+        newProfile = {
+          ...baseProfile,
+          institutionDetails: {
+            institutionName,
+            address: institutionAddress,
+            contactEmail: institutionContactEmail,
+            contactNumber: institutionContactNumber,
+            classes: parseList(classesInput),
+            semesters: parseList(semestersInput),
+          },
+        };
+      }
 
       await setDoc(doc(db, 'users', user.uid), newProfile);
+
+      if (accountType === 'TEACHER' && verifiedInvite) {
+        await consumeTeacherInvite(verifiedInvite.code);
+      }
+
       router.push('/dashboard');
     } catch (err: any) {
       setError(err.message || 'Failed to create account');
@@ -167,91 +217,135 @@ export default function RegisterForm() {
   };
 
   const inputClass =
-    'w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white placeholder-slate-600';
+    'w-full px-4 py-2 bg-surface-base border border-surface-border rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none text-white placeholder-slate-600';
   const labelClass = 'block text-sm font-medium mb-1 text-slate-300';
 
   return (
-    <div className="w-full max-w-lg p-8 bg-slate-900 rounded-xl border border-slate-800 shadow-2xl text-white">
-      <h2 className="text-2xl font-bold text-center mb-1 text-indigo-400">Create your account</h2>
+    <div className="w-full max-w-lg p-8 bg-surface-raised rounded-xl border border-surface-border shadow-2xl text-white">
+      <h2 className="text-2xl font-bold text-center mb-1 text-brand-400">Create your account</h2>
       <p className="text-center text-sm text-slate-400 mb-6">Join OnyxStack Labs in a few steps</p>
 
-      <div className="mb-6 grid grid-cols-2 gap-2 bg-slate-950 p-1 rounded-lg border border-slate-800">
+      <div className="mb-6 grid grid-cols-3 gap-2 bg-surface-base p-1 rounded-lg border border-surface-border">
         <button
           type="button"
           onClick={() => setAccountType('STUDENT')}
-          className={`py-2 rounded-md text-sm font-semibold transition ${
-            accountType === 'STUDENT' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'
+          className={`py-2 rounded-md text-xs sm:text-sm font-semibold transition ${
+            accountType === 'STUDENT' ? 'bg-brand-600 text-white shadow' : 'text-slate-400 hover:text-white'
           }`}
         >
-          I'm a Student
+          Student
+        </button>
+        <button
+          type="button"
+          onClick={() => setAccountType('TEACHER')}
+          className={`py-2 rounded-md text-xs sm:text-sm font-semibold transition ${
+            accountType === 'TEACHER' ? 'bg-brand-600 text-white shadow' : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          Teacher
         </button>
         <button
           type="button"
           onClick={() => setAccountType('INSTITUTION')}
-          className={`py-2 rounded-md text-sm font-semibold transition ${
-            accountType === 'INSTITUTION' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'
+          className={`py-2 rounded-md text-xs sm:text-sm font-semibold transition ${
+            accountType === 'INSTITUTION' ? 'bg-brand-600 text-white shadow' : 'text-slate-400 hover:text-white'
           }`}
         >
-          We're an Institution
+          Institution
         </button>
       </div>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-500/10 border border-red-500 text-red-400 text-sm rounded-lg break-words">
+        <div className="mb-4 p-3 bg-accent-danger/10 border border-accent-danger text-accent-danger text-sm rounded-lg break-words">
           {error}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <div className="space-y-4">
-          <p className="text-xs font-mono text-slate-500 uppercase tracking-wider">Account details</p>
-          <div>
-            <label className={labelClass}>{accountType === 'STUDENT' ? 'Full Name' : 'Your Name (Institution Admin)'}</label>
+      {accountType === 'TEACHER' && (
+        <div className="mb-5 p-4 bg-surface-base border border-surface-border rounded-xl space-y-3">
+          <p className="text-xs font-mono text-slate-400 uppercase">Step 1 — Verify your invite code</p>
+          <div className="flex gap-2">
             <input
               type="text"
-              required
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              className={inputClass}
-              placeholder="John Doe"
+              value={inviteCode}
+              onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+              className={`${inputClass} font-mono tracking-widest uppercase`}
+              placeholder="e.g., A7K3F2"
+              maxLength={6}
             />
+            <button
+              type="button"
+              onClick={handleVerifyInvite}
+              disabled={verifyingInvite}
+              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-sm font-semibold rounded-lg transition disabled:opacity-50 shrink-0"
+            >
+              {verifyingInvite ? '...' : 'Verify'}
+            </button>
           </div>
-          <div>
-            <label className={labelClass}>Email</label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className={inputClass}
-              placeholder="you@example.com"
-            />
-          </div>
-          <div>
-            <label className={labelClass}>Password</label>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className={inputClass}
-              placeholder="••••••••"
-            />
-          </div>
-          <div>
-            <label className={labelClass}>Phone Number (optional)</label>
-            <input
-              type="tel"
-              value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
-              className={inputClass}
-              placeholder="+92 300 1234567"
-            />
-          </div>
+          {inviteError && <p className="text-xs text-accent-danger">{inviteError}</p>}
+          {verifiedInvite && (
+            <p className="text-xs text-accent-success flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              Verified — joining {verifiedInvite.institutionName} for {verifiedInvite.assignedClasses.join(', ')}
+            </p>
+          )}
         </div>
+      )}
 
-        {accountType === 'STUDENT' ? (
-          <div className="space-y-4 pt-2 border-t border-slate-800">
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {(accountType !== 'TEACHER' || verifiedInvite) && (
+          <div className="space-y-4">
+            <p className="text-xs font-mono text-slate-500 uppercase tracking-wider">Account details</p>
+            <div>
+              <label className={labelClass}>
+                {accountType === 'INSTITUTION' ? 'Your Name (Institution Admin)' : 'Full Name'}
+              </label>
+              <input
+                type="text"
+                required
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                className={inputClass}
+                placeholder="John Doe"
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Email</label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className={inputClass}
+                placeholder="you@example.com"
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Password</label>
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className={inputClass}
+                placeholder="••••••••"
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Phone Number (optional)</label>
+              <input
+                type="tel"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                className={inputClass}
+                placeholder="+92 300 1234567"
+              />
+            </div>
+          </div>
+        )}
+
+        {accountType === 'STUDENT' && (
+          <div className="space-y-4 pt-2 border-t border-surface-border">
             <p className="text-xs font-mono text-slate-500 uppercase tracking-wider pt-4">Academic details</p>
 
             <div>
@@ -273,7 +367,7 @@ export default function RegisterForm() {
                 ))}
               </select>
               {!institutionsLoading && institutions.length === 0 && (
-                <p className="text-xs text-amber-400 mt-1">
+                <p className="text-xs text-accent-warning mt-1">
                   No institutions registered yet. Ask your institution to sign up first.
                 </p>
               )}
@@ -359,7 +453,7 @@ export default function RegisterForm() {
                 type="checkbox"
                 checked={hasVehicle}
                 onChange={(e) => setHasVehicle(e.target.checked)}
-                className="w-4 h-4 accent-indigo-600"
+                className="w-4 h-4 accent-brand-600"
               />
               I use a vehicle to commute
             </label>
@@ -399,8 +493,10 @@ export default function RegisterForm() {
               </div>
             )}
           </div>
-        ) : (
-          <div className="space-y-4 pt-2 border-t border-slate-800">
+        )}
+
+        {accountType === 'INSTITUTION' && (
+          <div className="space-y-4 pt-2 border-t border-surface-border">
             <p className="text-xs font-mono text-slate-500 uppercase tracking-wider pt-4">Institution details</p>
             <div>
               <label className={labelClass}>Institution Name</label>
@@ -471,35 +567,37 @@ export default function RegisterForm() {
           </div>
         )}
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 transition font-medium rounded-lg disabled:opacity-50"
-        >
-          {loading ? 'Creating account...' : 'Create Account'}
-        </button>
+        {(accountType !== 'TEACHER' || verifiedInvite) && (
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-2.5 bg-brand-600 hover:bg-brand-500 transition font-medium rounded-lg disabled:opacity-50"
+          >
+            {loading ? 'Creating account...' : 'Create Account'}
+          </button>
+        )}
       </form>
 
       <div className="relative my-6">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-slate-800"></div>
+          <div className="w-full border-t border-surface-border"></div>
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-slate-900 px-2 text-slate-400">Or register with</span>
+          <span className="bg-surface-raised px-2 text-slate-400">Or register with</span>
         </div>
       </div>
 
       <button
         onClick={handleGoogleSignIn}
         type="button"
-        className="w-full py-2.5 border border-slate-700 hover:bg-slate-800 transition font-medium rounded-lg flex items-center justify-center gap-2"
+        className="w-full py-2.5 border border-surface-border hover:bg-slate-800 transition font-medium rounded-lg flex items-center justify-center gap-2"
       >
         <span>Continue with Google</span>
       </button>
 
       <p className="mt-6 text-center text-sm text-slate-400">
         Already have an account?{' '}
-        <Link href="/login" className="text-indigo-400 hover:underline font-medium">
+        <Link href="/login" className="text-brand-400 hover:underline font-medium">
           Sign In
         </Link>
       </p>
