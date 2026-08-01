@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
+import { db } from '@/lib/firebase';
+import { doc, updateDoc } from 'firebase/firestore';
+import { UserRole } from '@/types/auth';
 import {
   User,
   Shield,
@@ -13,126 +15,101 @@ import {
   Key,
   Mail,
   Building,
-  ShieldCheck,
-  Globe,
-  Lock,
-  Cpu
 } from 'lucide-react';
 
-export default function ProfilePage() {
+const ROLE_BADGE: Record<UserRole, { label: string; icon: React.ReactNode }> = {
+  STUDENT: { label: 'Student Account', icon: <Shield className="w-3.5 h-3.5" /> },
+  PARENT: { label: 'Parent Account', icon: <Shield className="w-3.5 h-3.5" /> },
+  TEACHER: { label: 'Teacher Account', icon: <Shield className="w-3.5 h-3.5" /> },
+  INSTITUTION: { label: 'Institution Account', icon: <Building className="w-3.5 h-3.5" /> },
+  ADMIN: { label: 'Admin Account', icon: <Shield className="w-3.5 h-3.5" /> },
+  SUPER_ADMIN: { label: 'Super Admin Account', icon: <Shield className="w-3.5 h-3.5" /> },
+};
+
+export default function SettingsPage() {
   const { user, profile, role } = useAuth();
+  const userRole: UserRole = role || profile?.role || 'STUDENT';
+  const badge = ROLE_BADGE[userRole];
 
-  // Resolve active role safely
-  const userRole = role || profile?.role || 'STUDENT';
-  const isAdmin = userRole === 'ADMIN';
-
-  // Active Tab State
-  const [activeTab, setActiveTab] = useState<'general' | 'academic' | 'security'>(isAdmin ? 'general' : 'general');
-
-  // Form States
-  const [displayName, setDisplayName] = useState(profile?.displayName || user?.displayName || (isAdmin ? 'Super Admin' : 'Student User'));
-  const [bio, setBio] = useState(isAdmin ? 'Enterprise Super Admin managing multi-tenant routing, security, and platform governance.' : 'Passionate about web development, computer science, and micro-SaaS projects.');
-  const [major, setMajor] = useState('Computer Science');
-  const [academicYear, setAcademicYear] = useState('3rd Year (Junior)');
-  const [emailNotifications, setEmailNotifications] = useState(true);
+  const [activeTab, setActiveTab] = useState<'general' | 'academic' | 'security'>('general');
+  const [displayName, setDisplayName] = useState(profile?.displayName || user?.displayName || '');
+  const [emailNotifications, setEmailNotifications] = useState(
+    profile?.preferences?.notifications?.email ?? true
+  );
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
-  const handleSaveProfile = (e: React.FormEvent) => {
+  const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user?.uid) return;
+
     setIsSaving(true);
     setSaveSuccess(false);
+    setSaveError('');
 
-    // Simulate save delay
-    setTimeout(() => {
-      setIsSaving(false);
+    try {
+      await updateDoc(doc(db, 'users', user.uid), {
+        displayName,
+        'preferences.notifications.email': emailNotifications,
+        updatedAt: new Date().toISOString(),
+      });
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
-    }, 1000);
+    } catch (err) {
+      setSaveError('Failed to save changes. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 p-2 sm:p-0">
-      {/* Header Banner & Profile Summary */}
-      <div className={`p-4 sm:p-6 bg-slate-900/60 border ${isAdmin ? 'border-rose-500/30 shadow-rose-500/5' : 'border-slate-800'} rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm`}>
+      {/* Header Banner */}
+      <div className="p-4 sm:p-6 bg-surface-raised/60 border border-surface-border rounded-card flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
         <div className="flex items-center gap-4">
-          <div className={`w-14 h-14 rounded-2xl ${isAdmin ? 'bg-rose-600/20 border-rose-500/30 text-rose-400' : 'bg-indigo-600/20 border-indigo-500/30 text-indigo-400'} border flex items-center justify-center text-xl font-bold shrink-0 shadow-lg`}>
-            {displayName.charAt(0).toUpperCase()}
+          <div className="w-14 h-14 rounded-2xl bg-brand-600/20 border border-brand-500/30 text-brand-400 flex items-center justify-center text-xl font-bold shrink-0 shadow-lg">
+            {(displayName || 'U').charAt(0).toUpperCase()}
           </div>
           <div>
-            <h1 className="text-base sm:text-lg font-bold text-white tracking-tight">
-              {displayName}
-            </h1>
+            <h1 className="text-base sm:text-lg font-bold text-white tracking-tight">{displayName || 'User'}</h1>
             <p className="text-xs text-slate-400 flex items-center gap-1.5 mt-0.5">
               <Mail className="w-3.5 h-3.5 text-slate-500" />
-              <span>{user?.email || (isAdmin ? 'admin@onyxstacklabs.com' : 'student@onyxstacklabs.com')}</span>
+              <span>{user?.email}</span>
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-auto">
-          {isAdmin ? (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">
-              <ShieldCheck className="w-3.5 h-3.5" />
-              <span>Super Admin Account</span>
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-              <Shield className="w-3.5 h-3.5" />
-              <span>Student Account</span>
-            </span>
-          )}
-        </div>
+        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono font-bold bg-brand-500/10 text-brand-400 border border-brand-500/20 self-start sm:self-auto">
+          {badge.icon}
+          <span>{badge.label}</span>
+        </span>
       </div>
 
-      {/* Navigation Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-800/80 pb-2 overflow-x-auto custom-scrollbar">
+      {/* Tabs */}
+      <div className="flex items-center gap-2 border-b border-surface-border pb-2 overflow-x-auto">
         <button
           onClick={() => setActiveTab('general')}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition ${
-            activeTab === 'general'
-              ? (isAdmin ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/20' : 'bg-indigo-600 text-white')
-              : 'bg-slate-900/60 text-slate-400 hover:text-white border border-slate-800'
+            activeTab === 'general' ? 'bg-brand-600 text-white' : 'bg-surface-raised/60 text-slate-400 hover:text-white border border-surface-border'
           }`}
         >
           <User className="w-3.5 h-3.5" />
           <span>General Info</span>
         </button>
-
-        {!isAdmin && (
-          <button
-            onClick={() => setActiveTab('academic')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition ${
-              activeTab === 'academic'
-                ? 'bg-indigo-600 text-white'
-                : 'bg-slate-900/60 text-slate-400 hover:text-white border border-slate-800'
-            }`}
-          >
-            <BookOpen className="w-3.5 h-3.5" />
-            <span>Academic Details</span>
-          </button>
-        )}
-
-        {isAdmin && (
-          <button
-            onClick={() => setActiveTab('academic')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition ${
-              activeTab === 'academic'
-                ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/20'
-                : 'bg-slate-900/60 text-slate-400 hover:text-white border border-slate-800'
-            }`}
-          >
-            <Cpu className="w-3.5 h-3.5" />
-            <span>Enterprise Controls</span>
-          </button>
-        )}
-
+        <button
+          onClick={() => setActiveTab('academic')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition ${
+            activeTab === 'academic' ? 'bg-brand-600 text-white' : 'bg-surface-raised/60 text-slate-400 hover:text-white border border-surface-border'
+          }`}
+        >
+          <BookOpen className="w-3.5 h-3.5" />
+          <span>My Details</span>
+        </button>
         <button
           onClick={() => setActiveTab('security')}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition ${
-            activeTab === 'security'
-              ? (isAdmin ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/20' : 'bg-indigo-600 text-white')
-              : 'bg-slate-900/60 text-slate-400 hover:text-white border border-slate-800'
+            activeTab === 'security' ? 'bg-brand-600 text-white' : 'bg-surface-raised/60 text-slate-400 hover:text-white border border-surface-border'
           }`}
         >
           <Shield className="w-3.5 h-3.5" />
@@ -140,201 +117,158 @@ export default function ProfilePage() {
         </button>
       </div>
 
-      {/* Main Tab Content */}
-      <form onSubmit={handleSaveProfile} className={`p-5 bg-slate-900/60 border ${isAdmin ? 'border-rose-500/20' : 'border-slate-800'} rounded-2xl space-y-5 shadow-sm`}>
+      <form onSubmit={handleSaveProfile} className="p-5 bg-surface-raised/60 border border-surface-border rounded-card space-y-5 shadow-sm">
         {saveSuccess && (
-          <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center gap-2 text-emerald-400 text-xs font-medium">
+          <div className="p-3 bg-accent-success/10 border border-accent-success/20 rounded-xl flex items-center gap-2 text-accent-success text-xs font-medium">
             <CheckCircle2 className="w-4 h-4 shrink-0" />
             <span>Profile settings updated successfully!</span>
           </div>
         )}
+        {saveError && (
+          <div className="p-3 bg-accent-danger/10 border border-accent-danger text-accent-danger text-xs rounded-xl">
+            {saveError}
+          </div>
+        )}
 
-        {/* Tab 1: General Info */}
         {activeTab === 'general' && (
           <div className="space-y-4">
-            <h2 className="text-sm font-bold text-white tracking-tight flex items-center gap-2">
-              <User className={`w-4 h-4 ${isAdmin ? 'text-rose-400' : 'text-indigo-400'}`} />
-              Personal Details
+            <h2 className="text-sm font-bold text-white flex items-center gap-2">
+              <User className="w-4 h-4 text-brand-400" /> Personal Details
             </h2>
-
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">
-                  Full Display Name
-                </label>
+                <label className="block text-xs font-medium text-slate-400 mb-1">Full Display Name</label>
                 <input
                   type="text"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 transition"
+                  className="w-full bg-surface-base border border-surface-border rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:ring-1 focus:ring-brand-500 transition"
                   required
                 />
               </div>
-
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">
-                  Email Address
-                </label>
+                <label className="block text-xs font-medium text-slate-400 mb-1">Email Address</label>
                 <input
                   type="email"
-                  value={user?.email || (isAdmin ? 'admin@onyxstacklabs.com' : 'student@onyxstacklabs.com')}
+                  value={user?.email || ''}
                   disabled
-                  className="w-full bg-slate-950/50 border border-slate-800/60 rounded-xl px-3 py-2 text-xs text-slate-500 cursor-not-allowed"
+                  className="w-full bg-surface-base/50 border border-surface-border/60 rounded-xl px-3 py-2 text-xs text-slate-500 cursor-not-allowed"
                 />
               </div>
             </div>
-
-            <div>
-              <label className="block text-xs font-medium text-slate-400 mb-1">
-                Short Bio / Description
-              </label>
-              <textarea
-                rows={3}
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 transition resize-none"
-              />
-            </div>
           </div>
         )}
 
-        {/* Tab 2: Academic Details (For Student) / Enterprise Controls (For Admin) */}
-        {activeTab === 'academic' && !isAdmin && (
+        {activeTab === 'academic' && (
           <div className="space-y-4">
-            <h2 className="text-sm font-bold text-white tracking-tight flex items-center gap-2">
-              <BookOpen className="w-4 h-4 text-indigo-400" />
-              Academic Status & Major
+            <h2 className="text-sm font-bold text-white flex items-center gap-2">
+              <BookOpen className="w-4 h-4 text-brand-400" /> My Details
             </h2>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">
-                  Department / Major
-                </label>
-                <input
-                  type="text"
-                  value={major}
-                  onChange={(e) => setMajor(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 transition"
-                />
+            {(userRole === 'STUDENT' || userRole === 'PARENT') && profile?.studentDetails && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="p-3 bg-surface-base rounded-xl border border-surface-border text-xs">
+                  <span className="text-slate-500 block mb-0.5">Institution</span>
+                  <span className="text-slate-200 font-medium">{profile.studentDetails.collegeName || '—'}</span>
+                </div>
+                <div className="p-3 bg-surface-base rounded-xl border border-surface-border text-xs">
+                  <span className="text-slate-500 block mb-0.5">Class</span>
+                  <span className="text-slate-200 font-medium">{profile.studentDetails.className || '—'}</span>
+                </div>
+                <div className="p-3 bg-surface-base rounded-xl border border-surface-border text-xs">
+                  <span className="text-slate-500 block mb-0.5">Roll Number</span>
+                  <span className="text-slate-200 font-medium">{profile.studentDetails.rollNumber || '—'}</span>
+                </div>
+                <div className="p-3 bg-surface-base rounded-xl border border-surface-border text-xs">
+                  <span className="text-slate-500 block mb-0.5">Subjects</span>
+                  <span className="text-slate-200 font-medium">{profile.studentDetails.subjects.join(', ') || '—'}</span>
+                </div>
               </div>
+            )}
 
-              <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">
-                  Academic Standing
-                </label>
-                <select
-                  value={academicYear}
-                  onChange={(e) => setAcademicYear(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 transition"
-                >
-                  <option value="1st Year (Freshman)">1st Year (Freshman)</option>
-                  <option value="2nd Year (Sophomore)">2nd Year (Sophomore)</option>
-                  <option value="3rd Year (Junior)">3rd Year (Junior)</option>
-                  <option value="4th Year (Senior)">4th Year (Senior)</option>
-                  <option value="Postgraduate">Postgraduate</option>
-                </select>
+            {userRole === 'TEACHER' && profile?.teacherDetails && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="p-3 bg-surface-base rounded-xl border border-surface-border text-xs">
+                  <span className="text-slate-500 block mb-0.5">Assigned Classes</span>
+                  <span className="text-slate-200 font-medium">{profile.teacherDetails.assignedClasses.join(', ') || '—'}</span>
+                </div>
+                <div className="p-3 bg-surface-base rounded-xl border border-surface-border text-xs">
+                  <span className="text-slate-500 block mb-0.5">Subjects</span>
+                  <span className="text-slate-200 font-medium">{profile.teacherDetails.subjects.join(', ') || '—'}</span>
+                </div>
               </div>
-            </div>
+            )}
 
-            <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2">
-                <Building className="w-4 h-4 text-indigo-400" />
-                <span className="text-slate-300 font-medium">Institution & Platform</span>
+            {userRole === 'INSTITUTION' && profile?.institutionDetails && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="p-3 bg-surface-base rounded-xl border border-surface-border text-xs">
+                  <span className="text-slate-500 block mb-0.5">Institution Name</span>
+                  <span className="text-slate-200 font-medium">{profile.institutionDetails.institutionName || '—'}</span>
+                </div>
+                <div className="p-3 bg-surface-base rounded-xl border border-surface-border text-xs">
+                  <span className="text-slate-500 block mb-0.5">Address</span>
+                  <span className="text-slate-200 font-medium">{profile.institutionDetails.address || '—'}</span>
+                </div>
+                <div className="p-3 bg-surface-base rounded-xl border border-surface-border text-xs">
+                  <span className="text-slate-500 block mb-0.5">Contact Email</span>
+                  <span className="text-slate-200 font-medium">{profile.institutionDetails.contactEmail || '—'}</span>
+                </div>
+                <div className="p-3 bg-surface-base rounded-xl border border-surface-border text-xs">
+                  <span className="text-slate-500 block mb-0.5">Contact Number</span>
+                  <span className="text-slate-200 font-medium">{profile.institutionDetails.contactNumber || '—'}</span>
+                </div>
               </div>
-              <span className="font-mono text-indigo-400 font-bold">OnyxStack Labs</span>
-            </div>
+            )}
+
+            {(userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') && (
+              <p className="text-xs text-slate-500">Platform-wide details are available on your Admin Dashboard.</p>
+            )}
           </div>
         )}
 
-        {activeTab === 'academic' && isAdmin && (
-          <div className="space-y-4">
-            <h2 className="text-sm font-bold text-white tracking-tight flex items-center gap-2">
-              <Cpu className="w-4 h-4 text-rose-400" />
-              Enterprise Platform Controls
-            </h2>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 space-y-1">
-                <p className="text-xs font-bold text-white font-mono">Platform Environment</p>
-                <p className="text-[11px] text-slate-400">Production Next.js 14 App Router</p>
-                <span className="inline-block mt-2 px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 text-[10px] font-mono font-bold border border-emerald-500/20">
-                  Live & Online
-                </span>
-              </div>
-
-              <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 space-y-1">
-                <p className="text-xs font-bold text-white font-mono">SEO & GEO Indexing</p>
-                <p className="text-[11px] text-slate-400">Keywords optimized for search crawlers.</p>
-                <span className="inline-block mt-2 px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 text-[10px] font-mono font-bold border border-indigo-500/20">
-                  Active Optimization
-                </span>
-              </div>
-            </div>
-
-            <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2">
-                <Globe className="w-4 h-4 text-rose-400" />
-                <span className="text-slate-300 font-medium">Root Domain</span>
-              </div>
-              <span className="font-mono text-rose-400 font-bold">onyxstacklabs.com</span>
-            </div>
-          </div>
-        )}
-
-        {/* Tab 3: Security & Preferences */}
         {activeTab === 'security' && (
           <div className="space-y-4">
-            <h2 className="text-sm font-bold text-white tracking-tight flex items-center gap-2">
-              <Shield className={`w-4 h-4 ${isAdmin ? 'text-rose-400' : 'text-indigo-400'}`} />
-              Security & Notifications
+            <h2 className="text-sm font-bold text-white flex items-center gap-2">
+              <Shield className="w-4 h-4 text-brand-400" /> Security & Notifications
             </h2>
 
-            <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-between">
+            <div className="p-4 bg-surface-base rounded-xl border border-surface-border flex items-center justify-between">
               <div className="space-y-0.5">
                 <p className="text-xs font-bold text-white flex items-center gap-1.5">
-                  <Bell className="w-3.5 h-3.5 text-indigo-400" />
-                  Email Notifications
+                  <Bell className="w-3.5 h-3.5 text-brand-400" /> Email Notifications
                 </p>
-                <p className="text-[11px] text-slate-400">
-                  {isAdmin ? 'Receive alerts for critical system errors, signups, and deployment logs.' : 'Receive alerts for assignment deadlines, shuttle schedules, and campus updates.'}
-                </p>
+                <p className="text-[11px] text-slate-400">Receive updates about your account activity.</p>
               </div>
-
               <input
                 type="checkbox"
                 checked={emailNotifications}
                 onChange={(e) => setEmailNotifications(e.target.checked)}
-                className={`w-4 h-4 ${isAdmin ? 'accent-rose-600' : 'accent-indigo-600'} rounded cursor-pointer`}
+                className="w-4 h-4 accent-brand-600 rounded cursor-pointer"
               />
             </div>
 
-            <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-between">
+            <div className="p-4 bg-surface-base rounded-xl border border-surface-border flex items-center justify-between">
               <div className="space-y-0.5">
                 <p className="text-xs font-bold text-white flex items-center gap-1.5">
-                  <Key className="w-3.5 h-3.5 text-amber-400" />
-                  Authentication Status
+                  <Key className="w-3.5 h-3.5 text-accent-warning" /> Authentication Status
                 </p>
-                <p className="text-[11px] text-slate-400">
-                  Secured via Firebase Authentication & SSL encryption.
-                </p>
+                <p className="text-[11px] text-slate-400">Secured via Firebase Authentication & SSL encryption.</p>
               </div>
-              <span className="text-[10px] font-mono px-2 py-1 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">
+              <span className="text-[10px] font-mono px-2 py-1 rounded bg-accent-success/10 text-accent-success border border-accent-success/20 font-bold">
                 Encrypted
               </span>
             </div>
           </div>
         )}
 
-        {/* Action Button */}
-        <div className="pt-3 border-t border-slate-800/80 flex justify-end">
+        <div className="pt-3 border-t border-surface-border flex justify-end">
           <button
             type="submit"
             disabled={isSaving}
-            className={`px-5 py-2.5 ${isAdmin ? 'bg-rose-600 hover:bg-rose-500 shadow-rose-600/20' : 'bg-indigo-600 hover:bg-indigo-500 shadow-indigo-600/20'} disabled:bg-slate-800 text-white font-semibold text-xs rounded-xl transition shadow-md flex items-center gap-1.5`}
+            className="px-5 py-2.5 bg-brand-600 hover:bg-brand-500 disabled:opacity-50 text-white font-semibold text-xs rounded-xl transition shadow-md flex items-center gap-1.5"
           >
             <Save className="w-3.5 h-3.5" />
-            <span>{isSaving ? 'Saving Changes...' : 'Save Profile Settings'}</span>
+            <span>{isSaving ? 'Saving...' : 'Save Profile Settings'}</span>
           </button>
         </div>
       </form>
