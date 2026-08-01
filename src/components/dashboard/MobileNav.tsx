@@ -4,44 +4,79 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { ShieldCheck } from 'lucide-react';
+import { UserRole } from '@/types/auth';
+import { DEFAULT_ROLE_REDIRECTS } from '@/lib/rbac';
 
 interface NavItem {
   label: string;
   href: string;
   icon: string;
-  studentOnly?: boolean;
 }
 
-const navItems: NavItem[] = [
-  { label: 'Overview', href: '/dashboard', icon: '📊' },
-  { label: 'AI Assistant', href: '/dashboard/ai-assistant', icon: '🤖', studentOnly: true },
-  { label: 'Notes Workspace', href: '/dashboard/notes', icon: '📝', studentOnly: true },
-  { label: 'Campus Mobility', href: '/dashboard/mobility', icon: '📍', studentOnly: true },
-  { label: 'Safety & Governance', href: '/dashboard/governance', icon: '🛡️' },
-  { label: 'Settings', href: '/dashboard/settings', icon: '⚙️' },
-];
+const ROLE_LABELS: Record<UserRole, string> = {
+  STUDENT: 'Student Portal',
+  PARENT: 'Parent Portal',
+  TEACHER: 'Teacher Portal',
+  INSTITUTION: 'Institution Portal',
+  ADMIN: 'Super Admin Portal',
+  SUPER_ADMIN: 'Super Admin Portal',
+};
+
+function getNavItems(role: UserRole): NavItem[] {
+  switch (role) {
+    case 'STUDENT':
+    case 'PARENT':
+      return [
+        { label: 'Overview', href: '/dashboard', icon: '📊' },
+        { label: 'AI Assistant', href: '/dashboard/ai-assistant', icon: '🤖' },
+        { label: 'Notes Workspace', href: '/dashboard/notes', icon: '📝' },
+        { label: 'Attendance', href: '/dashboard/attendance', icon: '✅' },
+        { label: 'Grades', href: '/dashboard/grades', icon: '🎓' },
+        { label: 'Timetable', href: '/dashboard/timetable', icon: '🗓️' },
+        { label: 'Campus Mobility', href: '/dashboard/mobility', icon: '📍' },
+        { label: 'Safety & Portal', href: '/dashboard/governance', icon: '🛡️' },
+        { label: 'Settings', href: '/dashboard/settings', icon: '⚙️' },
+      ];
+    case 'TEACHER':
+      return [
+        { label: 'Overview', href: '/dashboard/teacher', icon: '📊' },
+        { label: 'Settings', href: '/dashboard/settings', icon: '⚙️' },
+      ];
+    case 'INSTITUTION':
+      return [
+        { label: 'Overview', href: '/dashboard/institution', icon: '🏫' },
+        { label: 'Invite Teachers', href: '/dashboard/institution/teachers', icon: '➕' },
+        { label: 'Campus Locations', href: '/dashboard/institution/locations', icon: '📍' },
+        { label: 'Timetable', href: '/dashboard/institution/timetable', icon: '🗓️' },
+        { label: 'Attendance', href: '/dashboard/institution/attendance', icon: '✅' },
+        { label: 'Grades', href: '/dashboard/institution/grades', icon: '🎓' },
+        { label: 'Settings', href: '/dashboard/settings', icon: '⚙️' },
+      ];
+    case 'ADMIN':
+    case 'SUPER_ADMIN':
+      return [
+        { label: 'Overview', href: '/dashboard/admin', icon: '🛡️' },
+        { label: 'Settings', href: '/dashboard/settings', icon: '⚙️' },
+      ];
+    default:
+      return [];
+  }
+}
 
 export default function MobileNav() {
   const pathname = usePathname();
   const { profile, role } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
 
-  const userRole = role || profile?.role || 'STUDENT';
-  const isAdmin = userRole === 'ADMIN';
-
-  // Filter out student-only modules when logged in as ADMIN
-  const filteredNavItems = navItems.filter(item => {
-    if (isAdmin && item.studentOnly) return false;
-    return true;
-  });
+  const userRole: UserRole = role || profile?.role || 'STUDENT';
+  const homeHref = DEFAULT_ROLE_REDIRECTS[userRole] || '/dashboard';
+  const navItems = getNavItems(userRole);
 
   return (
     <>
-      {/* Mobile Top Bar Navigation Header */}
-      <div className="md:hidden flex items-center justify-between px-4 py-3 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 sticky top-0 z-30">
-        <Link href={isAdmin ? "/dashboard/admin" : "/dashboard"} className="flex items-center gap-2">
-          <div className="h-7 w-7 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-white text-xs shadow-md shadow-indigo-500/20">
+      <div className="md:hidden flex items-center justify-between px-4 py-3 bg-surface-raised/90 backdrop-blur-md border-b border-surface-border sticky top-0 z-30">
+        <Link href={homeHref} className="flex items-center gap-2">
+          <div className="h-7 w-7 rounded-lg bg-brand-600 flex items-center justify-center font-bold text-white text-xs shadow-md shadow-brand-500/20">
             O
           </div>
           <span className="text-xs font-bold text-white tracking-wide">
@@ -51,7 +86,7 @@ export default function MobileNav() {
 
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white rounded-lg bg-slate-950/80 border border-slate-800 transition active:scale-95 flex items-center gap-1.5"
+          className="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white rounded-lg bg-surface-base/80 border border-surface-border transition active:scale-95 flex items-center gap-1.5"
           aria-label="Toggle navigation drawer"
           aria-expanded={isOpen}
         >
@@ -67,25 +102,23 @@ export default function MobileNav() {
         </button>
       </div>
 
-      {/* Backdrop Overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-40 md:hidden transition-opacity"
+          className="fixed inset-0 bg-surface-base/80 backdrop-blur-sm z-40 md:hidden transition-opacity"
           onClick={() => setIsOpen(false)}
           aria-hidden="true"
         />
       )}
 
-      {/* Slide-out Navigation Drawer */}
       <div
-        className={`fixed top-0 left-0 bottom-0 w-64 bg-slate-900 border-r border-slate-800 p-4 z-50 transform transition-transform duration-200 ease-in-out md:hidden flex flex-col justify-between select-none ${
+        className={`fixed top-0 left-0 bottom-0 w-64 bg-surface-raised border-r border-surface-border p-4 z-50 transform transition-transform duration-200 ease-in-out md:hidden flex flex-col justify-between select-none ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         <div className="space-y-6">
-          <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+          <div className="flex items-center justify-between pb-4 border-b border-surface-border">
             <div className="flex items-center gap-2.5">
-              <div className="h-8 w-8 rounded-xl bg-indigo-600 flex items-center justify-center font-black text-white text-sm shadow-md shadow-indigo-500/20">
+              <div className="h-8 w-8 rounded-xl bg-brand-600 flex items-center justify-center font-black text-white text-sm shadow-md shadow-brand-500/20">
                 O
               </div>
               <div>
@@ -93,7 +126,7 @@ export default function MobileNav() {
                   OnyxStack Labs
                 </h2>
                 <span className="text-[10px] text-slate-400 font-mono">
-                  {isAdmin ? 'Super Admin Portal' : 'Student Portal'}
+                  {ROLE_LABELS[userRole]}
                 </span>
               </div>
             </div>
@@ -107,31 +140,10 @@ export default function MobileNav() {
           </div>
 
           <nav className="space-y-1">
-            {/* Admin Control Link inside Mobile Menu */}
-            {isAdmin && (
-              <div className="mb-4 space-y-1">
-                <div className="text-[10px] uppercase tracking-wider text-rose-400 font-bold px-3 mb-1 font-mono">
-                  Admin Control
-                </div>
-                <Link
-                  href="/dashboard/admin"
-                  onClick={() => setIsOpen(false)}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                    pathname === '/dashboard/admin'
-                      ? 'bg-rose-500/15 text-rose-300 border border-rose-500/30'
-                      : 'text-rose-400/80 hover:text-rose-200 hover:bg-slate-800/50'
-                  }`}
-                >
-                  <ShieldCheck className="w-4 h-4 text-rose-400" />
-                  <span>Admin Dashboard</span>
-                </Link>
-              </div>
-            )}
-
             <div className="text-[10px] uppercase tracking-wider text-slate-500 font-bold px-3 mb-2 font-mono">
               Workspaces
             </div>
-            {filteredNavItems.map((item) => {
+            {navItems.map((item) => {
               const isActive = pathname === item.href;
               return (
                 <Link
@@ -140,7 +152,7 @@ export default function MobileNav() {
                   onClick={() => setIsOpen(false)}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
                     isActive
-                      ? 'bg-indigo-600/15 text-indigo-400 border border-indigo-500/30'
+                      ? 'bg-brand-600/15 text-brand-400 border border-brand-500/30'
                       : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
                   }`}
                 >
@@ -152,15 +164,10 @@ export default function MobileNav() {
           </nav>
         </div>
 
-        {/* System Badge */}
-        <div className="p-3 bg-slate-950/70 border border-slate-800/80 rounded-xl text-xs text-slate-400 space-y-1">
+        <div className="p-3 bg-surface-base/70 border border-surface-border rounded-xl text-xs text-slate-400 space-y-1">
           <div className="flex items-center justify-between">
             <span className="font-semibold text-slate-200">System Role</span>
-            <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono uppercase font-bold ${
-              userRole === 'ADMIN' 
-                ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-                : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-            }`}>
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono uppercase font-bold bg-brand-500/10 text-brand-400 border border-brand-500/20">
               {userRole}
             </span>
           </div>
