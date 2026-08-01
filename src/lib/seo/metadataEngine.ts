@@ -9,6 +9,12 @@ export const SITE_CONFIG = {
     'An enterprise multi-tenant campus governance and AI-assisted learning platform built for higher education institutions.',
   defaultOgImage: 'https://Student.OnyxStackLabs.com/og-default.jpg',
   twitterHandle: '@OnyxStackLabs',
+  // Aliases used by root layout.tsx metadata block — kept in sync with the fields above.
+  title: 'Onyx Enterprise Student SaaS Platform',
+  siteName: 'OnyxStack Labs',
+  description:
+    'An enterprise multi-tenant campus governance and AI-assisted learning platform built for higher education institutions.',
+  url: 'https://Student.OnyxStackLabs.com',
 };
 
 export interface GenerateMetadataOptions {
