@@ -43,6 +43,13 @@ export interface InstitutionDetails {
   semesters: string[];
 }
 
+export interface TeacherDetails {
+  institutionId: string;
+  assignedClasses: string[];
+  subjects: string[];
+  phoneNumber?: string;
+}
+
 export interface UserProfile {
   uid: string;
   email: string;
@@ -52,6 +59,7 @@ export interface UserProfile {
   phoneNumber?: string;
   studentDetails?: StudentDetails;
   institutionDetails?: InstitutionDetails;
+  teacherDetails?: TeacherDetails;
   emergencyContact?: {
     name: string;
     relationship: string;
