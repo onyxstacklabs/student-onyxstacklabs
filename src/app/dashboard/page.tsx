@@ -359,7 +359,7 @@ function StudentOverview() {
 
 export default function OverviewPage() {
   return (
-    <ProtectedRoute allowedRoles={['STUDENT', 'PARENT', 'TEACHER']}>
+    <ProtectedRoute allowedRoles={['STUDENT']}>
       <StudentOverview />
     </ProtectedRoute>
   );
