@@ -50,6 +50,12 @@ export interface TeacherDetails {
   phoneNumber?: string;
 }
 
+export interface ParentDetails {
+  linkedStudentUid: string;
+  linkedStudentName: string;
+  institutionId?: string;
+}
+
 export interface UserProfile {
   uid: string;
   email: string;
@@ -60,6 +66,7 @@ export interface UserProfile {
   studentDetails?: StudentDetails;
   institutionDetails?: InstitutionDetails;
   teacherDetails?: TeacherDetails;
+  parentDetails?: ParentDetails;
   emergencyContact?: {
     name: string;
     relationship: string;
