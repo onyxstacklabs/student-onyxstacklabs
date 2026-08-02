@@ -15,7 +15,7 @@ export function hasPermission(role: UserRole, permission: Permission): boolean {
 
 export const DEFAULT_ROLE_REDIRECTS: Record<UserRole, string> = {
   STUDENT: '/dashboard',
-  PARENT: '/dashboard',
+  PARENT: '/dashboard/parent',
   TEACHER: '/dashboard/teacher',
   INSTITUTION: '/dashboard/institution',
   ADMIN: '/dashboard/admin',
