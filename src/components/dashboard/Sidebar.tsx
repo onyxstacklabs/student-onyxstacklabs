@@ -20,6 +20,7 @@ import {
   CalendarCheck,
   GraduationCap,
   Building2,
+  Receipt,
 } from 'lucide-react';
 
 interface NavItem {
@@ -42,11 +43,12 @@ function getNavItems(role: UserRole): NavItem[] {
     case 'STUDENT':
     case 'PARENT':
       return [
-        { label: 'Overview', href: '/dashboard', icon: <LayoutDashboard className="w-4 h-4 text-brand-400" /> },
+        { label: 'Overview', href: role === 'PARENT' ? '/dashboard/parent' : '/dashboard', icon: <LayoutDashboard className="w-4 h-4 text-brand-400" /> },
         { label: 'AI Assistant', href: '/dashboard/ai-assistant', icon: <Bot className="w-4 h-4 text-brand-400" /> },
         { label: 'Notes Workspace', href: '/dashboard/notes', icon: <FileText className="w-4 h-4 text-accent-success" /> },
         { label: 'Attendance', href: '/dashboard/attendance', icon: <CalendarCheck className="w-4 h-4 text-rose-400" /> },
         { label: 'Grades', href: '/dashboard/grades', icon: <GraduationCap className="w-4 h-4 text-violet-400" /> },
+        { label: 'Fees', href: '/dashboard/fees', icon: <Receipt className="w-4 h-4 text-teal-400" /> },
         { label: 'Timetable', href: '/dashboard/timetable', icon: <CalendarClock className="w-4 h-4 text-sky-400" /> },
         { label: 'Campus Mobility', href: '/dashboard/mobility', icon: <Compass className="w-4 h-4 text-accent-warning" /> },
         { label: 'Safety & Portal', href: '/dashboard/governance', icon: <ShieldAlert className="w-4 h-4 text-accent-danger" /> },
@@ -67,6 +69,7 @@ function getNavItems(role: UserRole): NavItem[] {
         { label: 'Timetable', href: '/dashboard/institution/timetable', icon: <CalendarClock className="w-4 h-4 text-sky-400" /> },
         { label: 'Attendance', href: '/dashboard/institution/attendance', icon: <CalendarCheck className="w-4 h-4 text-rose-400" /> },
         { label: 'Grades', href: '/dashboard/institution/grades', icon: <GraduationCap className="w-4 h-4 text-violet-400" /> },
+        { label: 'Fee Management', href: '/dashboard/institution/fees', icon: <Receipt className="w-4 h-4 text-teal-400" /> },
         { label: 'Settings', href: '/dashboard/settings', icon: <Settings className="w-4 h-4 text-slate-400" /> },
       ];
     case 'ADMIN':
