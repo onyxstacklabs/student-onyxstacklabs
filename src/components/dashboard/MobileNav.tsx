@@ -27,11 +27,12 @@ function getNavItems(role: UserRole): NavItem[] {
     case 'STUDENT':
     case 'PARENT':
       return [
-        { label: 'Overview', href: '/dashboard', icon: '📊' },
+        { label: 'Overview', href: role === 'PARENT' ? '/dashboard/parent' : '/dashboard', icon: '📊' },
         { label: 'AI Assistant', href: '/dashboard/ai-assistant', icon: '🤖' },
         { label: 'Notes Workspace', href: '/dashboard/notes', icon: '📝' },
         { label: 'Attendance', href: '/dashboard/attendance', icon: '✅' },
         { label: 'Grades', href: '/dashboard/grades', icon: '🎓' },
+        { label: 'Fees', href: '/dashboard/fees', icon: '🧾' },
         { label: 'Timetable', href: '/dashboard/timetable', icon: '🗓️' },
         { label: 'Campus Mobility', href: '/dashboard/mobility', icon: '📍' },
         { label: 'Safety & Portal', href: '/dashboard/governance', icon: '🛡️' },
@@ -52,6 +53,7 @@ function getNavItems(role: UserRole): NavItem[] {
         { label: 'Timetable', href: '/dashboard/institution/timetable', icon: '🗓️' },
         { label: 'Attendance', href: '/dashboard/institution/attendance', icon: '✅' },
         { label: 'Grades', href: '/dashboard/institution/grades', icon: '🎓' },
+        { label: 'Fee Management', href: '/dashboard/institution/fees', icon: '🧾' },
         { label: 'Settings', href: '/dashboard/settings', icon: '⚙️' },
       ];
     case 'ADMIN':
