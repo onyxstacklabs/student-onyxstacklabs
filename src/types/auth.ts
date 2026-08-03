@@ -34,6 +34,9 @@ export interface StudentDetails {
   electricVehicle?: ElectricVehicleDetails;
 }
 
+export type InstitutionAccountStatus = 'ACTIVE' | 'SUSPENDED';
+export type InstitutionSubscriptionTier = 'free' | 'pro' | 'enterprise';
+
 export interface InstitutionDetails {
   institutionName: string;
   address: string;
@@ -41,6 +44,8 @@ export interface InstitutionDetails {
   contactNumber: string;
   classes: string[];
   semesters: string[];
+  accountStatus?: InstitutionAccountStatus;
+  subscriptionTier?: InstitutionSubscriptionTier;
 }
 
 export interface TeacherDetails {
