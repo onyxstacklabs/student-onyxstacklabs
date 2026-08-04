@@ -60,6 +60,7 @@ function getNavItems(role: UserRole): NavItem[] {
     case 'SUPER_ADMIN':
       return [
         { label: 'Overview', href: '/dashboard/admin', icon: '🛡️' },
+        { label: 'Manage Institutions', href: '/dashboard/admin/institutions', icon: '🏫' },
         { label: 'Settings', href: '/dashboard/settings', icon: '⚙️' },
       ];
     default:
