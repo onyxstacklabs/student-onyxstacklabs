@@ -36,6 +36,8 @@ export interface StudentDetails {
 
 export type InstitutionAccountStatus = 'ACTIVE' | 'SUSPENDED';
 export type InstitutionSubscriptionTier = 'free' | 'pro' | 'enterprise';
+export type BillingCycle = 'monthly' | 'yearly';
+export type BillingCurrency = 'PKR' | 'USD';
 
 export interface InstitutionDetails {
   institutionName: string;
@@ -46,6 +48,11 @@ export interface InstitutionDetails {
   semesters: string[];
   accountStatus?: InstitutionAccountStatus;
   subscriptionTier?: InstitutionSubscriptionTier;
+  billingCycle?: BillingCycle;
+  billingCurrency?: BillingCurrency;
+  // If set, overrides the default tier price for this institution
+  // (used for negotiated/custom deals). If undefined, default tier pricing applies.
+  customPriceAmount?: number;
 }
 
 export interface TeacherDetails {
