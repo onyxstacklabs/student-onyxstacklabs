@@ -1,7 +1,13 @@
-import { collection, doc, getDocs, updateDoc, setDoc, serverTimestamp, query, where } from 'firebase/firestore';
+import { collection, doc, getDocs, updateDoc, setDoc, query, where } from 'firebase/firestore';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { UserProfile, InstitutionAccountStatus, InstitutionSubscriptionTier } from '@/types/auth';
+import {
+  UserProfile,
+  InstitutionAccountStatus,
+  InstitutionSubscriptionTier,
+  BillingCycle,
+  BillingCurrency,
+} from '@/types/auth';
 
 export interface AdminInstitutionView {
   uid: string;
@@ -9,6 +15,9 @@ export interface AdminInstitutionView {
   contactEmail: string;
   accountStatus: InstitutionAccountStatus;
   subscriptionTier: InstitutionSubscriptionTier;
+  billingCycle: BillingCycle;
+  billingCurrency: BillingCurrency;
+  customPriceAmount?: number;
 }
 
 export async function listAllInstitutionsForAdmin(): Promise<AdminInstitutionView[]> {
@@ -24,6 +33,9 @@ export async function listAllInstitutionsForAdmin(): Promise<AdminInstitutionVie
       contactEmail: data.institutionDetails?.contactEmail || data.email,
       accountStatus: data.institutionDetails?.accountStatus || 'ACTIVE',
       subscriptionTier: data.institutionDetails?.subscriptionTier || 'free',
+      billingCycle: data.institutionDetails?.billingCycle || 'monthly',
+      billingCurrency: data.institutionDetails?.billingCurrency || 'PKR',
+      customPriceAmount: data.institutionDetails?.customPriceAmount,
     };
   });
 }
@@ -51,6 +63,25 @@ export async function setInstitutionTier(
 ): Promise<void> {
   await updateDoc(doc(db, 'users', institutionUid), {
     'institutionDetails.subscriptionTier': tier,
+    updatedAt: new Date().toISOString(),
+  });
+}
+
+/**
+ * Sets billing terms for an institution — cycle, currency, and an optional
+ * custom negotiated price. Pass customPriceAmount as null to clear an
+ * override and fall back to default tier pricing.
+ */
+export async function setInstitutionBilling(
+  institutionUid: string,
+  billingCycle: BillingCycle,
+  billingCurrency: BillingCurrency,
+  customPriceAmount: number | null
+): Promise<void> {
+  await updateDoc(doc(db, 'users', institutionUid), {
+    'institutionDetails.billingCycle': billingCycle,
+    'institutionDetails.billingCurrency': billingCurrency,
+    'institutionDetails.customPriceAmount': customPriceAmount,
     updatedAt: new Date().toISOString(),
   });
 }
@@ -86,6 +117,8 @@ export async function createInstitutionByAdmin(
       semesters: [],
       accountStatus: 'ACTIVE',
       subscriptionTier: 'free',
+      billingCycle: 'monthly',
+      billingCurrency: 'PKR',
     },
     preferences: {
       theme: 'system',
