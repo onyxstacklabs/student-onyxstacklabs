@@ -76,6 +76,7 @@ function getNavItems(role: UserRole): NavItem[] {
     case 'SUPER_ADMIN':
       return [
         { label: 'Overview', href: '/dashboard/admin', icon: <ShieldCheck className="w-4 h-4 text-brand-400" /> },
+        { label: 'Manage Institutions', href: '/dashboard/admin/institutions', icon: <Building2 className="w-4 h-4 text-accent-warning" /> },
         { label: 'Settings', href: '/dashboard/settings', icon: <Settings className="w-4 h-4 text-slate-400" /> },
       ];
     default:
