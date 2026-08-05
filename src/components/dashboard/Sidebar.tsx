@@ -21,6 +21,7 @@ import {
   GraduationCap,
   Building2,
   Receipt,
+  CreditCard,
 } from 'lucide-react';
 
 interface NavItem {
@@ -70,6 +71,7 @@ function getNavItems(role: UserRole): NavItem[] {
         { label: 'Attendance', href: '/dashboard/institution/attendance', icon: <CalendarCheck className="w-4 h-4 text-rose-400" /> },
         { label: 'Grades', href: '/dashboard/institution/grades', icon: <GraduationCap className="w-4 h-4 text-violet-400" /> },
         { label: 'Fee Management', href: '/dashboard/institution/fees', icon: <Receipt className="w-4 h-4 text-teal-400" /> },
+        { label: 'Billing', href: '/dashboard/institution/billing', icon: <CreditCard className="w-4 h-4 text-amber-400" /> },
         { label: 'Settings', href: '/dashboard/settings', icon: <Settings className="w-4 h-4 text-slate-400" /> },
       ];
     case 'ADMIN':
