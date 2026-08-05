@@ -50,9 +50,9 @@ export interface InstitutionDetails {
   subscriptionTier?: InstitutionSubscriptionTier;
   billingCycle?: BillingCycle;
   billingCurrency?: BillingCurrency;
-  // If set, overrides the default tier price for this institution
-  // (used for negotiated/custom deals). If undefined, default tier pricing applies.
   customPriceAmount?: number;
+  logoUrl?: string;
+  accentColor?: string; // hex color, e.g. "#4f46e5"
 }
 
 export interface TeacherDetails {
