@@ -6,37 +6,47 @@ import { useAuth } from '@/context/AuthContext';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Badge } from '@/components/ui/Badge';
 import { PLATFORM_CONFIG } from '@/lib/config/platform';
+import { getEffectivePrice, FREE_TIER_STUDENT_LIMIT } from '@/lib/config/pricing';
 import { InstitutionSubscriptionTier } from '@/types/auth';
 import { CreditCard, Check, MessageCircle, Mail } from 'lucide-react';
 
-const TIER_DETAILS: Record<
-  InstitutionSubscriptionTier,
-  { label: string; price: string; features: string[] }
-> = {
-  free: {
-    label: 'Free',
-    price: '$0/month',
-    features: ['Up to 30 students', 'Courses, Notes, Timetable', 'Attendance & Grades tracking'],
-  },
-  pro: {
-    label: 'Pro',
-    price: '$49/month',
-    features: ['Up to 300 students', 'Everything in Free', 'AI Assistant', 'Fee Management', 'Emergency SOS', 'Campus Mobility'],
-  },
-  enterprise: {
-    label: 'Enterprise',
-    price: 'Custom pricing',
-    features: ['Unlimited students', 'Everything in Pro', 'Multi-campus management', 'Custom branding', 'Priority support'],
-  },
+const TIER_FEATURES: Record<InstitutionSubscriptionTier, string[]> = {
+  free: [`Up to ${FREE_TIER_STUDENT_LIMIT} students`, 'Courses, Notes, Timetable', 'Attendance & Grades tracking'],
+  pro: [
+    'Up to 300 students',
+    'Everything in Free',
+    'AI Assistant',
+    'Fee Management',
+    'Emergency SOS',
+    'Campus Mobility',
+  ],
+  enterprise: [
+    'Unlimited students',
+    'Everything in Pro',
+    'Multi-campus management',
+    'Custom branding',
+    'Priority support',
+  ],
+};
+
+const TIER_LABELS: Record<InstitutionSubscriptionTier, string> = {
+  free: 'Free',
+  pro: 'Pro',
+  enterprise: 'Enterprise',
 };
 
 function InstitutionBilling() {
   const { profile } = useAuth();
-  const currentTier: InstitutionSubscriptionTier = profile?.institutionDetails?.subscriptionTier || 'free';
-  const accountStatus = profile?.institutionDetails?.accountStatus || 'ACTIVE';
+  const details = profile?.institutionDetails;
+  const currentTier: InstitutionSubscriptionTier = details?.subscriptionTier || 'free';
+  const accountStatus = details?.accountStatus || 'ACTIVE';
+  const cycle = details?.billingCycle || 'monthly';
+  const currency = details?.billingCurrency || 'PKR';
+
+  const price = getEffectivePrice(currentTier, currency, cycle, details?.customPriceAmount);
 
   const whatsappMessage = encodeURIComponent(
-    `Hi, I'd like to upgrade our institution's plan on OnyxStack Labs. Institution: ${profile?.institutionDetails?.institutionName || ''}`
+    `Hi, I'd like to discuss our institution's plan on OnyxStack Labs. Institution: ${details?.institutionName || ''}`
   );
 
   return (
@@ -47,13 +57,19 @@ function InstitutionBilling() {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs font-mono text-slate-400 uppercase">Current Plan</p>
-            <h2 className="text-2xl font-bold text-white mt-1">{TIER_DETAILS[currentTier].label}</h2>
-            <p className="text-sm text-slate-400">{TIER_DETAILS[currentTier].price}</p>
+            <h2 className="text-2xl font-bold text-white mt-1">{TIER_LABELS[currentTier]}</h2>
+            <p className="text-sm text-slate-400">
+              {price === null
+                ? 'Contact us for pricing'
+                : price === 0
+                ? 'Free'
+                : `${currency} ${price.toLocaleString()} / ${cycle === 'monthly' ? 'month' : 'year'}`}
+            </p>
           </div>
           <Badge tone={accountStatus === 'ACTIVE' ? 'success' : 'danger'}>{accountStatus}</Badge>
         </div>
         <div className="space-y-1.5 pt-3 border-t border-surface-border">
-          {TIER_DETAILS[currentTier].features.map((f) => (
+          {TIER_FEATURES[currentTier].map((f) => (
             <div key={f} className="flex items-center gap-2 text-sm text-slate-300">
               <Check className="w-4 h-4 text-accent-success" /> {f}
             </div>
@@ -63,9 +79,10 @@ function InstitutionBilling() {
 
       {currentTier !== 'enterprise' && (
         <div className="bg-surface-raised/60 border border-surface-border rounded-card p-6 space-y-4">
-          <h2 className="text-sm font-bold text-white">Want to upgrade?</h2>
+          <h2 className="text-sm font-bold text-white">Want to upgrade or discuss pricing?</h2>
           <p className="text-sm text-slate-400">
-            Billing is currently handled manually by our team. Reach out and we'll get you set up on a new plan.
+            Billing is currently handled directly by our team — including flexible monthly/yearly terms.
+            Reach out and we'll work it out with you.
           </p>
           <div className="flex flex-col sm:flex-row gap-2">
             <a
