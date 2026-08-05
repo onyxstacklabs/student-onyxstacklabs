@@ -54,6 +54,7 @@ function getNavItems(role: UserRole): NavItem[] {
         { label: 'Attendance', href: '/dashboard/institution/attendance', icon: '✅' },
         { label: 'Grades', href: '/dashboard/institution/grades', icon: '🎓' },
         { label: 'Fee Management', href: '/dashboard/institution/fees', icon: '🧾' },
+        { label: 'Billing', href: '/dashboard/institution/billing', icon: '💳' },
         { label: 'Settings', href: '/dashboard/settings', icon: '⚙️' },
       ];
     case 'ADMIN':
