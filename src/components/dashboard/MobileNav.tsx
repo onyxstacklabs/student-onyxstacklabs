@@ -55,6 +55,7 @@ function getNavItems(role: UserRole): NavItem[] {
         { label: 'Grades', href: '/dashboard/institution/grades', icon: '🎓' },
         { label: 'Fee Management', href: '/dashboard/institution/fees', icon: '🧾' },
         { label: 'Billing', href: '/dashboard/institution/billing', icon: '💳' },
+        { label: 'Branding', href: '/dashboard/institution/branding', icon: '🎨' },
         { label: 'Settings', href: '/dashboard/settings', icon: '⚙️' },
       ];
     case 'ADMIN':
@@ -77,14 +78,21 @@ export default function MobileNav() {
   const userRole: UserRole = role || profile?.role || 'STUDENT';
   const homeHref = DEFAULT_ROLE_REDIRECTS[userRole] || '/dashboard';
   const navItems = getNavItems(userRole);
+  const logoUrl = profile?.institutionDetails?.logoUrl;
 
   return (
     <>
       <div className="md:hidden flex items-center justify-between px-4 py-3 bg-surface-raised/90 backdrop-blur-md border-b border-surface-border sticky top-0 z-30">
         <Link href={homeHref} className="flex items-center gap-2">
-          <div className="h-7 w-7 rounded-lg bg-brand-600 flex items-center justify-center font-bold text-white text-xs shadow-md shadow-brand-500/20">
-            O
-          </div>
+          {logoUrl ? (
+            <div className="h-7 w-7 rounded-lg overflow-hidden shrink-0 border border-surface-border bg-white">
+              <img src={logoUrl} alt="Institution logo" className="w-full h-full object-contain" />
+            </div>
+          ) : (
+            <div className="h-7 w-7 rounded-lg bg-brand-600 flex items-center justify-center font-bold text-white text-xs shadow-md shadow-brand-500/20">
+              O
+            </div>
+          )}
           <span className="text-xs font-bold text-white tracking-wide">
             OnyxStack Labs
           </span>
@@ -124,9 +132,15 @@ export default function MobileNav() {
         <div className="space-y-6">
           <div className="flex items-center justify-between pb-4 border-b border-surface-border">
             <div className="flex items-center gap-2.5">
-              <div className="h-8 w-8 rounded-xl bg-brand-600 flex items-center justify-center font-black text-white text-sm shadow-md shadow-brand-500/20">
-                O
-              </div>
+              {logoUrl ? (
+                <div className="h-8 w-8 rounded-xl overflow-hidden shrink-0 border border-surface-border bg-white">
+                  <img src={logoUrl} alt="Institution logo" className="w-full h-full object-contain" />
+                </div>
+              ) : (
+                <div className="h-8 w-8 rounded-xl bg-brand-600 flex items-center justify-center font-black text-white text-sm shadow-md shadow-brand-500/20">
+                  O
+                </div>
+              )}
               <div>
                 <h2 className="text-sm font-bold text-white leading-none">
                   OnyxStack Labs
