@@ -22,6 +22,7 @@ import {
   Building2,
   Receipt,
   CreditCard,
+  Palette,
 } from 'lucide-react';
 
 interface NavItem {
@@ -72,6 +73,7 @@ function getNavItems(role: UserRole): NavItem[] {
         { label: 'Grades', href: '/dashboard/institution/grades', icon: <GraduationCap className="w-4 h-4 text-violet-400" /> },
         { label: 'Fee Management', href: '/dashboard/institution/fees', icon: <Receipt className="w-4 h-4 text-teal-400" /> },
         { label: 'Billing', href: '/dashboard/institution/billing', icon: <CreditCard className="w-4 h-4 text-amber-400" /> },
+        { label: 'Branding', href: '/dashboard/institution/branding', icon: <Palette className="w-4 h-4 text-pink-400" /> },
         { label: 'Settings', href: '/dashboard/settings', icon: <Settings className="w-4 h-4 text-slate-400" /> },
       ];
     case 'ADMIN':
@@ -93,14 +95,21 @@ export default function Sidebar() {
   const userRole: UserRole = role || profile?.role || 'STUDENT';
   const homeHref = DEFAULT_ROLE_REDIRECTS[userRole] || '/dashboard';
   const navItems = getNavItems(userRole);
+  const logoUrl = profile?.institutionDetails?.logoUrl;
 
   return (
     <aside className="hidden md:flex flex-col w-64 border-r border-surface-border bg-surface-raised/60 p-4 shrink-0 justify-between h-full select-none">
       <div className="space-y-6">
         <Link href={homeHref} className="flex items-center gap-3 px-2 group">
-          <div className="h-9 w-9 rounded-xl bg-brand-600 flex items-center justify-center font-black text-white shadow-lg shadow-brand-500/20 group-hover:scale-105 transition-transform">
-            O
-          </div>
+          {logoUrl ? (
+            <div className="h-9 w-9 rounded-xl overflow-hidden shrink-0 border border-surface-border bg-white">
+              <img src={logoUrl} alt="Institution logo" className="w-full h-full object-contain" />
+            </div>
+          ) : (
+            <div className="h-9 w-9 rounded-xl bg-brand-600 flex items-center justify-center font-black text-white shadow-lg shadow-brand-500/20 group-hover:scale-105 transition-transform">
+              O
+            </div>
+          )}
           <div>
             <h2 className="text-sm font-bold text-white leading-none group-hover:text-brand-400 transition-colors">
               OnyxStack Labs
