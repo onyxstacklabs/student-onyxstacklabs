@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { StatCard } from '@/components/ui/StatCard';
 import {
   getCoursesForUser,
   createCourse,
@@ -14,7 +15,6 @@ import {
   BookOpen, 
   Clock, 
   FileText, 
-  ArrowRight, 
   Plus, 
   X,
   Check,
@@ -29,14 +29,13 @@ interface Note {
 }
 
 function StudentOverview() {
-  const { user, profile, role } = useAuth();
-  const userRole = role || profile?.role || 'STUDENT';
+  const { user, profile } = useAuth();
 
   const [courses, setCourses] = useState<Course[]>([]);
   const [coursesLoading, setCoursesLoading] = useState(true);
   const [courseError, setCourseError] = useState('');
 
-  const [notes, setNotes] = useState<Note[]>([]);
+  const [notes] = useState<Note[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newCode, setNewCode] = useState('');
@@ -97,193 +96,73 @@ function StudentOverview() {
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto pb-12">
-      <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 sm:p-8 backdrop-blur-xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl -z-10 pointer-events-none" />
-        
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="px-3 py-1 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-xs rounded-full font-mono font-medium uppercase tracking-wider">
-                Role: {userRole}
-              </span>
-            </div>
-            <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
-              Good day, {profile?.displayName || user?.email?.split('@')[0] || 'Student'}! 👋
-            </h1>
-            <p className="text-slate-400 text-sm sm:text-base mt-1">
-              Here is your live academic overview and workspace summary for OnyxStack Labs.
-            </p>
-          </div>
-
+      <PageHeader
+        title={`Good day, ${profile?.displayName || user?.email?.split('@')[0] || 'Student'}! 👋`}
+        description="Here's your academic overview and workspace summary."
+        actions={
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm rounded-xl transition shadow-lg shadow-indigo-600/20 active:scale-95"
+            className="flex items-center gap-2 px-4 py-2.5 bg-brand-600 hover:bg-brand-500 text-white font-medium text-sm rounded-xl transition shadow-lg shadow-brand-600/20 active:scale-95"
           >
             <Plus className="w-4 h-4" />
             Manage Courses
           </button>
-        </div>
-      </div>
+        }
+      />
 
       {courseError && (
-        <div className="p-3 bg-red-500/10 border border-red-500 text-red-400 text-sm rounded-lg">
+        <div className="p-3 bg-accent-danger/10 border border-accent-danger text-accent-danger text-sm rounded-lg">
           {courseError}
         </div>
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-        <div 
+        <StatCard
+          label="Enrolled Courses"
+          value={coursesLoading ? '—' : activeEnrolledCount}
+          unit="Courses"
+          icon={BookOpen}
+          tone="brand"
+          loading={coursesLoading}
           onClick={() => setIsModalOpen(true)}
-          className="group cursor-pointer bg-slate-900/60 hover:bg-slate-900 border border-slate-800 hover:border-indigo-500/50 rounded-2xl p-6 transition-all duration-300 shadow-lg hover:shadow-indigo-500/10"
-        >
-          <div className="flex justify-between items-start">
-            <div className="space-y-2">
-              <p className="text-xs font-mono text-slate-400 uppercase tracking-wider">ENROLLED COURSES</p>
-              <div className="flex items-baseline gap-2">
-                <span className="text-4xl font-extrabold text-white tracking-tight">
-                  {coursesLoading ? '—' : activeEnrolledCount}
-                </span>
-                <span className="text-slate-400 text-sm font-medium">Courses</span>
-              </div>
-            </div>
-            <div className="p-3 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 rounded-xl group-hover:scale-110 transition duration-300">
-              <BookOpen className="w-6 h-6" />
-            </div>
-          </div>
-          
-          <div className="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-indigo-400 font-medium">
-            <span>
-              {coursesLoading
-                ? 'Loading...'
-                : activeEnrolledCount === 0
-                ? 'No courses joined'
-                : `${activeEnrolledCount} Modules Active`}
-            </span>
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
-          </div>
-        </div>
-
-        <Link href="/dashboard/ai-assistant" className="block group">
-          <div className="bg-slate-900/60 hover:bg-slate-900 border border-slate-800 hover:border-amber-500/50 rounded-2xl p-6 transition-all duration-300 shadow-lg hover:shadow-amber-500/10">
-            <div className="flex justify-between items-start">
-              <div className="space-y-2">
-                <p className="text-xs font-mono text-slate-400 uppercase tracking-wider">HOURS LEARNED</p>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-extrabold text-white tracking-tight">
-                    {coursesLoading ? '—' : estimatedHours}
-                  </span>
-                  <span className="text-slate-400 text-sm font-medium">hrs</span>
-                </div>
-              </div>
-              <div className="p-3 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl group-hover:scale-110 transition duration-300">
-                <Clock className="w-6 h-6" />
-              </div>
-            </div>
-
-            <div className="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-amber-400 font-medium">
-              <span>Track study metrics</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
-            </div>
-          </div>
-        </Link>
-
-        <Link href="/dashboard/notes" className="block group">
-          <div className="bg-slate-900/60 hover:bg-slate-900 border border-slate-800 hover:border-emerald-500/50 rounded-2xl p-6 transition-all duration-300 shadow-lg hover:shadow-emerald-500/10">
-            <div className="flex justify-between items-start">
-              <div className="space-y-2">
-                <p className="text-xs font-mono text-slate-400 uppercase tracking-wider">SAVED NOTES</p>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-extrabold text-white tracking-tight">{notes.length}</span>
-                  <span className="text-slate-400 text-sm font-medium">Documents</span>
-                </div>
-              </div>
-              <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl group-hover:scale-110 transition duration-300">
-                <FileText className="w-6 h-6" />
-              </div>
-            </div>
-
-            <div className="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-emerald-400 font-medium">
-              <span>Access notes workspace</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
-            </div>
-          </div>
-        </Link>
-
-        <Link href="/dashboard/attendance" className="block group">
-          <div className="bg-slate-900/60 hover:bg-slate-900 border border-slate-800 hover:border-rose-500/50 rounded-2xl p-6 transition-all duration-300 shadow-lg hover:shadow-rose-500/10">
-            <div className="flex justify-between items-start">
-              <div className="space-y-2">
-                <p className="text-xs font-mono text-slate-400 uppercase tracking-wider">ATTENDANCE</p>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-extrabold text-white tracking-tight">View</span>
-                </div>
-              </div>
-              <div className="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-xl group-hover:scale-110 transition duration-300">
-                <CalendarCheck className="w-6 h-6" />
-              </div>
-            </div>
-
-            <div className="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-rose-400 font-medium">
-              <span>Check your record</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
-            </div>
-          </div>
-        </Link>
-
-        <Link href="/dashboard/grades" className="block group">
-          <div className="bg-slate-900/60 hover:bg-slate-900 border border-slate-800 hover:border-violet-500/50 rounded-2xl p-6 transition-all duration-300 shadow-lg hover:shadow-violet-500/10">
-            <div className="flex justify-between items-start">
-              <div className="space-y-2">
-                <p className="text-xs font-mono text-slate-400 uppercase tracking-wider">GRADES</p>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-extrabold text-white tracking-tight">View</span>
-                </div>
-              </div>
-              <div className="p-3 bg-violet-500/10 border border-violet-500/20 text-violet-400 rounded-xl group-hover:scale-110 transition duration-300">
-                <GraduationCap className="w-6 h-6" />
-              </div>
-            </div>
-
-            <div className="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-violet-400 font-medium">
-              <span>Check your GPA</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
-            </div>
-          </div>
-        </Link>
-
-        <Link href="/dashboard/timetable" className="block group">
-          <div className="bg-slate-900/60 hover:bg-slate-900 border border-slate-800 hover:border-sky-500/50 rounded-2xl p-6 transition-all duration-300 shadow-lg hover:shadow-sky-500/10">
-            <div className="flex justify-between items-start">
-              <div className="space-y-2">
-                <p className="text-xs font-mono text-slate-400 uppercase tracking-wider">TIMETABLE</p>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-extrabold text-white tracking-tight">View</span>
-                </div>
-              </div>
-              <div className="p-3 bg-sky-500/10 border border-sky-500/20 text-sky-400 rounded-xl group-hover:scale-110 transition duration-300">
-                <CalendarClock className="w-6 h-6" />
-              </div>
-            </div>
-
-            <div className="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-sky-400 font-medium">
-              <span>See your schedule</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
-            </div>
-          </div>
-        </Link>
+          subtext={activeEnrolledCount === 0 ? 'No courses joined' : `${activeEnrolledCount} modules active`}
+        />
+        <a href="/dashboard/ai-assistant" className="block">
+          <StatCard
+            label="Hours Learned"
+            value={coursesLoading ? '—' : estimatedHours}
+            unit="hrs"
+            icon={Clock}
+            tone="warning"
+            loading={coursesLoading}
+            subtext="Track study metrics"
+          />
+        </a>
+        <a href="/dashboard/notes" className="block">
+          <StatCard label="Saved Notes" value={notes.length} unit="Documents" icon={FileText} tone="success" subtext="Access notes workspace" />
+        </a>
+        <a href="/dashboard/attendance" className="block">
+          <StatCard label="Attendance" value="View" icon={CalendarCheck} tone="danger" subtext="Check your record" />
+        </a>
+        <a href="/dashboard/grades" className="block">
+          <StatCard label="Grades" value="View" icon={GraduationCap} tone="info" subtext="Check your GPA" />
+        </a>
+        <a href="/dashboard/timetable" className="block">
+          <StatCard label="Timetable" value="View" icon={CalendarClock} tone="brand" subtext="See your schedule" />
+        </a>
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-6 shadow-2xl space-y-6">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-surface-base/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-surface-raised border border-surface-border rounded-card w-full max-w-lg p-6 shadow-2xl space-y-6">
+            <div className="flex items-center justify-between border-b border-surface-border pb-4">
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <BookOpen className="w-5 h-5 text-indigo-400" />
-                Manage Academic Courses
+                <BookOpen className="w-5 h-5 text-brand-400" />
+                Manage Courses
               </h3>
               <button 
                 onClick={() => setIsModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white bg-slate-800/50 hover:bg-slate-800 transition"
+                className="p-1 rounded-lg text-slate-400 hover:text-white bg-surface-base/50 hover:bg-surface-base transition"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -297,7 +176,7 @@ function StudentOverview() {
                   placeholder="e.g., Cloud Architecture & DevOps"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full bg-surface-base border border-surface-border rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
                 />
               </div>
 
@@ -308,20 +187,20 @@ function StudentOverview() {
                   placeholder="e.g., CS-402"
                   value={newCode}
                   onChange={(e) => setNewCode(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white uppercase font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full bg-surface-base border border-surface-border rounded-xl px-4 py-2.5 text-sm text-white uppercase font-mono focus:outline-none focus:ring-2 focus:ring-brand-500"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm rounded-xl transition shadow-lg shadow-indigo-600/20 disabled:opacity-50"
+                className="w-full py-2.5 bg-brand-600 hover:bg-brand-500 text-white font-medium text-sm rounded-xl transition shadow-lg shadow-brand-600/20 disabled:opacity-50"
               >
                 {submitting ? 'Adding...' : 'Add & Enroll Course'}
               </button>
             </form>
 
-            <div className="space-y-3 pt-4 border-t border-slate-800">
+            <div className="space-y-3 pt-4 border-t border-surface-border">
               <h4 className="text-xs font-mono uppercase tracking-wider text-slate-400">Your Enrolled Courses</h4>
               <div className="max-h-48 overflow-y-auto space-y-2 pr-1">
                 {coursesLoading ? (
@@ -330,16 +209,16 @@ function StudentOverview() {
                   <p className="text-xs text-slate-500 py-4 text-center">No courses added yet.</p>
                 ) : (
                   courses.map((c) => (
-                    <div key={c.id} className="flex items-center justify-between p-3 bg-slate-950 border border-slate-800 rounded-xl">
+                    <div key={c.id} className="flex items-center justify-between p-3 bg-surface-base border border-surface-border rounded-xl">
                       <div>
                         <p className="text-xs font-bold text-white">{c.title}</p>
-                        <span className="text-[10px] font-mono text-indigo-400">{c.code}</span>
+                        <span className="text-[10px] font-mono text-brand-400">{c.code}</span>
                       </div>
                       <button
                         onClick={() => toggleEnrollment(c.id, c.enrolled)}
                         className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
                           c.enrolled 
-                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
+                            ? 'bg-accent-success/10 text-accent-success border border-accent-success/20' 
                             : 'bg-slate-800 text-slate-400 hover:text-white'
                         }`}
                       >
