@@ -176,7 +176,7 @@ function GovernancePortal() {
 
 export default function GovernancePage() {
   return (
-    <ProtectedRoute allowedRoles={['STUDENT', 'PARENT', 'TEACHER']}>
+    <ProtectedRoute allowedRoles={['STUDENT']}>
       <GovernancePortal />
     </ProtectedRoute>
   );
