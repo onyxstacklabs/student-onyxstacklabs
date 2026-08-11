@@ -5,6 +5,7 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/context/AuthContext';
 import { getInvoicesForStudent, isInvoiceOverdue } from '@/lib/academics/fees';
 import { Invoice } from '@/types/fees';
+import { PageHeader } from '@/components/ui/PageHeader';
 import { Receipt, Printer, MessageCircle, AlertTriangle } from 'lucide-react';
 
 function MyFees() {
@@ -61,26 +62,24 @@ function MyFees() {
 
   return (
     <div className="space-y-8 max-w-4xl mx-auto pb-12">
-      <div className="flex items-center gap-3 print:hidden">
-        <div className="p-2 bg-indigo-500/10 rounded-xl text-indigo-400 border border-indigo-500/20">
-          <Receipt className="w-6 h-6" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-white">{isParent ? `${displayName}'s Fees` : 'My Fees'}</h1>
-          <p className="text-sm text-slate-400">Fee invoices, payment status, and receipts.</p>
-        </div>
+      <div className="print:hidden">
+        <PageHeader
+          icon={Receipt}
+          title={isParent ? `${displayName}'s Fees` : 'My Fees'}
+          description="Fee invoices, payment status, and receipts."
+        />
       </div>
 
       {error && (
-        <div className="p-3 bg-red-500/10 border border-red-500 text-red-400 text-sm rounded-lg print:hidden">{error}</div>
+        <div className="p-3 bg-accent-danger/10 border border-accent-danger text-accent-danger text-sm rounded-lg print:hidden">{error}</div>
       )}
 
       {loading ? (
-        <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-12 text-center print:hidden">
+        <div className="bg-surface-raised/40 border border-surface-border/80 rounded-card p-12 text-center print:hidden">
           <p className="text-slate-500 text-sm">Loading fee records...</p>
         </div>
       ) : invoices.length === 0 ? (
-        <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-12 text-center space-y-2 print:hidden">
+        <div className="bg-surface-raised/40 border border-surface-border/80 rounded-card p-12 text-center space-y-2 print:hidden">
           <Receipt className="w-10 h-10 text-slate-600 mx-auto" />
           <h3 className="text-slate-300 font-semibold text-base">No fee records yet.</h3>
           <p className="text-slate-500 text-xs">The institution hasn't issued any invoices yet.</p>
@@ -88,7 +87,7 @@ function MyFees() {
       ) : (
         <div className="space-y-4 print:hidden">
           {totalOutstanding > 0 && (
-            <div className="p-4 bg-accent-warning/10 border border-accent-warning/20 rounded-2xl flex items-center justify-between">
+            <div className="p-4 bg-accent-warning/10 border border-accent-warning/20 rounded-card flex items-center justify-between">
               <span className="text-sm font-semibold text-accent-warning">Total Outstanding</span>
               <span className="text-xl font-bold text-accent-warning">${totalOutstanding.toLocaleString()}</span>
             </div>
@@ -98,7 +97,7 @@ function MyFees() {
             const overdue = isInvoiceOverdue(inv);
             const remaining = inv.totalAmount - inv.amountPaid;
             return (
-              <div key={inv.id} className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3">
+              <div key={inv.id} className="bg-surface-raised border border-surface-border rounded-card p-5 space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-sm font-bold text-white">{inv.title}</h3>
@@ -107,10 +106,10 @@ function MyFees() {
                   <span
                     className={`text-[10px] font-mono px-2 py-1 rounded-full uppercase ${
                       inv.status === 'PAID'
-                        ? 'bg-emerald-500/10 text-emerald-400'
+                        ? 'bg-accent-success/10 text-accent-success'
                         : overdue
-                        ? 'bg-red-500/10 text-red-400'
-                        : 'bg-amber-500/10 text-amber-400'
+                        ? 'bg-accent-danger/10 text-accent-danger'
+                        : 'bg-accent-warning/10 text-accent-warning'
                     }`}
                   >
                     {overdue && inv.status !== 'PAID' ? (
@@ -132,7 +131,7 @@ function MyFees() {
                   ))}
                 </div>
 
-                <div className="flex items-center justify-between pt-2 border-t border-slate-800 text-sm">
+                <div className="flex items-center justify-between pt-2 border-t border-surface-border text-sm">
                   <span className="text-slate-300">
                     Paid ${inv.amountPaid} / ${inv.totalAmount}
                   </span>
