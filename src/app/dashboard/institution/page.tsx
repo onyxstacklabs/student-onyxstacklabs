@@ -1,52 +1,23 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { InstitutionOverviewCard } from '@/components/institution/InstitutionOverviewCard';
 import { EmergencyAlertsPanel } from '@/components/institution/EmergencyAlertsPanel';
 import { LiveTripsPanel } from '@/components/institution/LiveTripsPanel';
-import { Building2, Settings, Users, Shield, Plus, Sparkles } from 'lucide-react';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { Building2, Users, Palette, UserPlus, Receipt, CalendarClock, MapPin, ArrowRight } from 'lucide-react';
 
 function InstitutionDashboard() {
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-6 lg:p-8 space-y-6">
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-5">
-        <div className="space-y-1">
-          <div className="flex items-center space-x-2.5">
-            <div className="p-2 bg-indigo-500/10 rounded-xl text-indigo-400 border border-indigo-500/20">
-              <Building2 className="w-6 h-6" />
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
-              Institution Governance Portal
-            </h1>
-          </div>
-          <p className="text-sm text-slate-400 pl-11">
-            Manage multi-campus workspaces, tenant quotas, department hierarchies, and custom branding.
-          </p>
-        </div>
+    <div className="max-w-6xl mx-auto space-y-6 p-2 sm:p-0">
+      <PageHeader
+        icon={Building2}
+        title="Institution Portal"
+        description="Manage your students, teachers, schedules, and finances — all in one place."
+      />
 
-        <div className="flex items-center space-x-2.5 self-start md:self-auto">
-          <button
-            disabled
-            title="Department management is coming soon"
-            className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-slate-900 border border-slate-800 text-slate-500 text-xs font-medium rounded-lg cursor-not-allowed"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Add Department (Soon)</span>
-          </button>
-          <button
-            disabled
-            title="Workspace settings are coming soon"
-            className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-slate-900 border border-slate-800 text-slate-500 text-xs font-semibold rounded-lg cursor-not-allowed"
-          >
-            <Settings className="w-4 h-4" />
-            <span>Workspace Settings (Soon)</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Main Content Area */}
       <div className="space-y-6">
         <EmergencyAlertsPanel />
 
@@ -55,43 +26,99 @@ function InstitutionDashboard() {
         <InstitutionOverviewCard />
 
         {/* Quick Management Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="p-5 bg-slate-900 border border-slate-800 rounded-xl space-y-3">
-            <div className="flex items-center space-x-2 text-indigo-400">
-              <Users className="w-5 h-5" />
-              <h3 className="font-semibold text-white text-sm">Faculty & Student Roster</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Link
+            href="/dashboard/institution/teachers"
+            className="p-5 bg-surface-raised/60 hover:bg-surface-raised border border-surface-border hover:border-brand-500/40 rounded-card space-y-3 transition block"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-brand-400">
+                <UserPlus className="w-5 h-5" />
+                <h3 className="font-semibold text-white text-sm">Invite Teachers</h3>
+              </div>
+              <ArrowRight className="w-4 h-4 text-slate-500" />
             </div>
             <p className="text-xs text-slate-400 leading-relaxed">
-              Review active student enrollments, issue faculty invitations, and manage department access control roles.
+              Generate invite codes to onboard teachers into their assigned classes.
             </p>
-            <button
-              disabled
-              title="Roster management is coming soon"
-              className="text-xs font-semibold text-slate-500 cursor-not-allowed inline-flex items-center space-x-1"
-            >
-              <span>View Active Members (Soon)</span>
-            </button>
-          </div>
+          </Link>
 
-          <div className="p-5 bg-slate-900 border border-slate-800 rounded-xl space-y-3">
-            <div className="flex items-center space-x-2 text-violet-400">
-              <Sparkles className="w-5 h-5" />
-              <h3 className="font-semibold text-white text-sm">Custom Branding & Domain</h3>
+          <Link
+            href="/dashboard/institution/locations"
+            className="p-5 bg-surface-raised/60 hover:bg-surface-raised border border-surface-border hover:border-accent-warning/40 rounded-card space-y-3 transition block"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-accent-warning">
+                <MapPin className="w-5 h-5" />
+                <h3 className="font-semibold text-white text-sm">Campus Locations</h3>
+              </div>
+              <ArrowRight className="w-4 h-4 text-slate-500" />
             </div>
             <p className="text-xs text-slate-400 leading-relaxed">
-              Configure institutional primary/accent color themes, upload university logos, and manage SSL certificates.
+              Add real coordinates for buildings, dorms, and safety features.
             </p>
-            <button
-              disabled
-              title="Branding configuration is coming soon"
-              className="text-xs font-semibold text-slate-500 cursor-not-allowed inline-flex items-center space-x-1"
-            >
-              <span>Configure Branding (Soon)</span>
-            </button>
+          </Link>
+
+          <Link
+            href="/dashboard/institution/timetable"
+            className="p-5 bg-surface-raised/60 hover:bg-surface-raised border border-surface-border hover:border-sky-500/40 rounded-card space-y-3 transition block"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sky-400">
+                <CalendarClock className="w-5 h-5" />
+                <h3 className="font-semibold text-white text-sm">Timetable</h3>
+              </div>
+              <ArrowRight className="w-4 h-4 text-slate-500" />
+            </div>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Build the weekly class schedule for each of your classes.
+            </p>
+          </Link>
+
+          <Link
+            href="/dashboard/institution/fees"
+            className="p-5 bg-surface-raised/60 hover:bg-surface-raised border border-surface-border hover:border-teal-500/40 rounded-card space-y-3 transition block"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-teal-400">
+                <Receipt className="w-5 h-5" />
+                <h3 className="font-semibold text-white text-sm">Fee Management</h3>
+              </div>
+              <ArrowRight className="w-4 h-4 text-slate-500" />
+            </div>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Create invoices, record payments, and track your ledger.
+            </p>
+          </Link>
+
+          <Link
+            href="/dashboard/institution/branding"
+            className="p-5 bg-surface-raised/60 hover:bg-surface-raised border border-surface-border hover:border-pink-500/40 rounded-card space-y-3 transition block"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-pink-400">
+                <Palette className="w-5 h-5" />
+                <h3 className="font-semibold text-white text-sm">Branding</h3>
+              </div>
+              <ArrowRight className="w-4 h-4 text-slate-500" />
+            </div>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Upload your logo and set an accent color for your portal.
+            </p>
+          </Link>
+
+          <div className="p-5 bg-surface-raised/40 border border-surface-border rounded-card space-y-3">
+            <div className="flex items-center gap-2 text-slate-400">
+              <Users className="w-5 h-5" />
+              <h3 className="font-semibold text-white text-sm">Student Roster</h3>
+            </div>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              View your full student list from the overview card above — tap "Students" to expand it.
+            </p>
           </div>
         </div>
       </div>
-    </main>
+    </div>
   );
 }
 
