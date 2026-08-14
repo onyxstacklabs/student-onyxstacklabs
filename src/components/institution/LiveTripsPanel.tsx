@@ -29,16 +29,16 @@ export function LiveTripsPanel() {
   if (trips.length === 0) return null;
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+    <div className="bg-surface-raised border border-surface-border rounded-card p-6 space-y-4">
       <h3 className="text-sm font-bold text-white flex items-center gap-2">
-        <Navigation className="w-4 h-4 text-indigo-400" />
+        <Navigation className="w-4 h-4 text-brand-400" />
         Students Currently Commuting ({trips.length})
       </h3>
       <div className="space-y-2">
         {trips.map((trip) => (
           <div
             key={trip.id}
-            className="flex items-center justify-between p-3.5 bg-slate-950 border border-slate-800 rounded-xl"
+            className="flex items-center justify-between p-3.5 bg-surface-base border border-surface-border rounded-xl"
           >
             <div>
               <p className="text-sm font-semibold text-white">{trip.studentName}</p>
@@ -48,10 +48,10 @@ export function LiveTripsPanel() {
               </p>
             </div>
             <div className="flex items-center gap-3 text-xs">
-              <span className="flex items-center gap-1 text-emerald-400 font-mono">
+              <span className="flex items-center gap-1 text-accent-success font-mono">
                 <Route className="w-3.5 h-3.5" /> {trip.distanceCoveredKm.toFixed(1)} km
               </span>
-              <span className="flex items-center gap-1 text-amber-400 font-mono">
+              <span className="flex items-center gap-1 text-accent-warning font-mono">
                 <Gauge className="w-3.5 h-3.5" /> {trip.currentSpeedKmh?.toFixed(0) || 0} km/h
               </span>
             </div>
