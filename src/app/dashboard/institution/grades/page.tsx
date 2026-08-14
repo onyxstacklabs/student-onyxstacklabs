@@ -5,6 +5,7 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/context/AuthContext';
 import { getStudentsForInstitution, InstitutionStudent } from '@/lib/academics/institutionStudents';
 import { addGrade } from '@/lib/academics/grades';
+import { PageHeader } from '@/components/ui/PageHeader';
 import { GraduationCap } from 'lucide-react';
 
 function GradeEntry() {
@@ -79,31 +80,23 @@ function GradeEntry() {
   };
 
   const inputClass =
-    'w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500';
+    'w-full bg-surface-base border border-surface-border rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-brand-500';
   const labelClass = 'block text-xs font-mono text-slate-400 uppercase mb-2';
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-6 lg:p-8 space-y-6 max-w-2xl mx-auto">
-      <div className="flex items-center gap-3 border-b border-slate-800 pb-5">
-        <div className="p-2 bg-indigo-500/10 rounded-xl text-indigo-400 border border-indigo-500/20">
-          <GraduationCap className="w-6 h-6" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-white">Enter Grades</h1>
-          <p className="text-sm text-slate-400">Record a student's assessment result.</p>
-        </div>
-      </div>
+    <div className="max-w-2xl mx-auto space-y-6 pb-12">
+      <PageHeader icon={GraduationCap} title="Enter Grades" description="Record a student's assessment result." />
 
       {error && (
-        <div className="p-3 bg-red-500/10 border border-red-500 text-red-400 text-sm rounded-lg">{error}</div>
+        <div className="p-3 bg-accent-danger/10 border border-accent-danger text-accent-danger text-sm rounded-lg">{error}</div>
       )}
       {successMsg && (
-        <div className="p-3 bg-emerald-500/10 border border-emerald-500 text-emerald-400 text-sm rounded-lg">
+        <div className="p-3 bg-accent-success/10 border border-accent-success text-accent-success text-sm rounded-lg">
           {successMsg}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+      <form onSubmit={handleSubmit} className="bg-surface-raised/60 border border-surface-border rounded-card p-6 space-y-4">
         <div>
           <label className={labelClass}>Class</label>
           <select
@@ -198,12 +191,12 @@ function GradeEntry() {
         <button
           type="submit"
           disabled={saving}
-          className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm rounded-xl transition disabled:opacity-50"
+          className="w-full py-3 bg-brand-600 hover:bg-brand-500 text-white font-semibold text-sm rounded-xl transition disabled:opacity-50"
         >
           {saving ? 'Saving...' : 'Save Grade'}
         </button>
       </form>
-    </main>
+    </div>
   );
 }
 
