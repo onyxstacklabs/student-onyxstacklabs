@@ -11,6 +11,7 @@ import {
   DayOfWeek,
   TimetableEntry,
 } from '@/lib/academics/timetable';
+import { PageHeader } from '@/components/ui/PageHeader';
 import { CalendarClock, Plus, Trash2 } from 'lucide-react';
 
 function TimetableManager() {
@@ -108,20 +109,12 @@ function TimetableManager() {
   };
 
   const inputClass =
-    'w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500';
+    'w-full bg-surface-base border border-surface-border rounded-xl px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-brand-500';
   const labelClass = 'block text-xs font-mono text-slate-400 uppercase mb-1.5';
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-6 lg:p-8 space-y-6 max-w-4xl mx-auto">
-      <div className="flex items-center gap-3 border-b border-slate-800 pb-5">
-        <div className="p-2 bg-indigo-500/10 rounded-xl text-indigo-400 border border-indigo-500/20">
-          <CalendarClock className="w-6 h-6" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-white">Manage Timetable</h1>
-          <p className="text-sm text-slate-400">Build the weekly class schedule.</p>
-        </div>
-      </div>
+    <div className="max-w-4xl mx-auto space-y-6 pb-12">
+      <PageHeader icon={CalendarClock} title="Manage Timetable" description="Build the weekly class schedule." />
 
       <div>
         <label className={labelClass}>Class</label>
@@ -140,14 +133,14 @@ function TimetableManager() {
       </div>
 
       {error && (
-        <div className="p-3 bg-red-500/10 border border-red-500 text-red-400 text-sm rounded-lg">{error}</div>
+        <div className="p-3 bg-accent-danger/10 border border-accent-danger text-accent-danger text-sm rounded-lg">{error}</div>
       )}
 
       {selectedClass && (
         <>
-          <form onSubmit={handleAddEntry} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+          <form onSubmit={handleAddEntry} className="bg-surface-raised/60 border border-surface-border rounded-card p-6 space-y-4">
             <h2 className="text-sm font-bold text-white flex items-center gap-2">
-              <Plus className="w-4 h-4 text-indigo-400" /> Add Period
+              <Plus className="w-4 h-4 text-brand-400" /> Add Period
             </h2>
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -212,13 +205,13 @@ function TimetableManager() {
             <button
               type="submit"
               disabled={saving}
-              className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm rounded-xl transition disabled:opacity-50"
+              className="w-full py-2.5 bg-brand-600 hover:bg-brand-500 text-white font-semibold text-sm rounded-xl transition disabled:opacity-50"
             >
               {saving ? 'Adding...' : 'Add Period'}
             </button>
           </form>
 
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-2">
+          <div className="bg-surface-raised/60 border border-surface-border rounded-card p-6 space-y-2">
             <h2 className="text-sm font-bold text-white">Weekly Schedule — {selectedClass}</h2>
             {loading ? (
               <p className="text-xs text-slate-500 py-4 text-center">Loading...</p>
@@ -229,7 +222,7 @@ function TimetableManager() {
                 {entries.map((entry) => (
                   <div
                     key={entry.id}
-                    className="flex items-center justify-between p-3 bg-slate-950 border border-slate-800 rounded-xl"
+                    className="flex items-center justify-between p-3 bg-surface-base border border-surface-border rounded-xl"
                   >
                     <div>
                       <p className="text-xs font-bold text-white">
@@ -243,7 +236,7 @@ function TimetableManager() {
                     </div>
                     <button
                       onClick={() => handleDelete(entry.id)}
-                      className="text-slate-500 hover:text-red-400 p-1 transition"
+                      className="text-slate-500 hover:text-accent-danger p-1 transition"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -254,7 +247,7 @@ function TimetableManager() {
           </div>
         </>
       )}
-    </main>
+    </div>
   );
 }
 
