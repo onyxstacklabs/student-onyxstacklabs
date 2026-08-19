@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, deleteUser } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { useAuth } from '@/context/AuthContext';
@@ -10,7 +10,7 @@ import Link from 'next/link';
 import { UserProfile, BloodGroup } from '@/types/auth';
 import { listInstitutions, InstitutionOption } from '@/lib/academics/institutions';
 import { getTeacherInvite, consumeTeacherInvite, TeacherInvite } from '@/lib/academics/teacherInvites';
-import { findStudentByRollNumber, LinkableStudent } from '@/lib/academics/parentLinking';
+import { findStudentByRollNumber } from '@/lib/academics/parentLinking';
 import { CheckCircle2 } from 'lucide-react';
 
 type AccountType = 'STUDENT' | 'PARENT' | 'TEACHER' | 'INSTITUTION';
@@ -57,11 +57,8 @@ export default function RegisterForm() {
   const [verifyingInvite, setVerifyingInvite] = useState(false);
   const [inviteError, setInviteError] = useState('');
 
-  // Parent fields
+  // Parent fields — child is now verified AFTER account creation (authenticated read), not before.
   const [parentRollNumber, setParentRollNumber] = useState('');
-  const [linkedStudent, setLinkedStudent] = useState<LinkableStudent | null>(null);
-  const [linkingStudent, setLinkingStudent] = useState(false);
-  const [linkError, setLinkError] = useState('');
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -117,29 +114,6 @@ export default function RegisterForm() {
     }
   };
 
-  const handleFindStudent = async () => {
-    setLinkError('');
-    setLinkedStudent(null);
-    if (!selectedInstitutionId || !parentRollNumber.trim()) {
-      setLinkError("Select the institution and enter your child's roll number.");
-      return;
-    }
-
-    setLinkingStudent(true);
-    try {
-      const student = await findStudentByRollNumber(selectedInstitutionId, parentRollNumber);
-      if (!student) {
-        setLinkError('No student found with that roll number at this institution.');
-        return;
-      }
-      setLinkedStudent(student);
-    } catch (err) {
-      setLinkError('Could not verify. Please try again.');
-    } finally {
-      setLinkingStudent(false);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -152,8 +126,8 @@ export default function RegisterForm() {
       setError('Please verify your invite code first.');
       return;
     }
-    if (accountType === 'PARENT' && !linkedStudent) {
-      setError("Please verify your child's roll number first.");
+    if (accountType === 'PARENT' && (!selectedInstitutionId || !parentRollNumber.trim())) {
+      setError("Please select your child's institution and enter their roll number.");
       return;
     }
 
@@ -214,13 +188,23 @@ export default function RegisterForm() {
             phoneNumber: phoneNumber || undefined,
           },
         };
-      } else if (accountType === 'PARENT' && linkedStudent) {
+      } else if (accountType === 'PARENT') {
+        // Account already exists at this point, so this lookup runs authenticated —
+        // required so Firestore Security Rules never need to allow public/unauthenticated
+        // reads of student records just to support this signup flow.
+        const student = await findStudentByRollNumber(selectedInstitutionId, parentRollNumber);
+        if (!student) {
+          await deleteUser(user);
+          setError('No student found with that roll number at the selected institution. Please check and try again.');
+          setLoading(false);
+          return;
+        }
         newProfile = {
           ...baseProfile,
           parentDetails: {
-            linkedStudentUid: linkedStudent.uid,
-            linkedStudentName: linkedStudent.displayName,
-            institutionId: linkedStudent.institutionId,
+            linkedStudentUid: student.uid,
+            linkedStudentName: student.displayName,
+            institutionId: student.institutionId,
           },
         };
       } else {
@@ -266,12 +250,12 @@ export default function RegisterForm() {
   const labelClass = 'block text-sm font-medium mb-1 text-slate-300';
 
   const readyToShowAccountFields =
-    (accountType !== 'TEACHER' && accountType !== 'PARENT') || (accountType === 'TEACHER' && verifiedInvite) || (accountType === 'PARENT' && linkedStudent);
+    accountType !== 'TEACHER' || Boolean(verifiedInvite);
 
   return (
     <div className="w-full max-w-lg p-8 bg-surface-raised rounded-xl border border-surface-border shadow-2xl text-white">
       <h2 className="text-2xl font-bold text-center mb-1 text-brand-400">Create your account</h2>
-      <p className="text-center text-sm text-slate-400 mb-6">Join OnyxStack Labs in a few steps</p>
+      <p className="text-center text-sm text-slate-400 mb-6">Join CampusOS in a few steps</p>
 
       <div className="mb-6 grid grid-cols-2 sm:grid-cols-4 gap-2 bg-surface-base p-1 rounded-lg border border-surface-border">
         <button
@@ -344,57 +328,6 @@ export default function RegisterForm() {
             <p className="text-xs text-accent-success flex items-center gap-1.5">
               <CheckCircle2 className="w-3.5 h-3.5" />
               Verified — joining {verifiedInvite.institutionName} for {verifiedInvite.assignedClasses.join(', ')}
-            </p>
-          )}
-        </div>
-      )}
-
-      {accountType === 'PARENT' && (
-        <div className="mb-5 p-4 bg-surface-base border border-surface-border rounded-xl space-y-3">
-          <p className="text-xs font-mono text-slate-400 uppercase">Step 1 — Find your child</p>
-          <div>
-            <label className={labelClass}>Institution</label>
-            <select
-              value={selectedInstitutionId}
-              onChange={(e) => {
-                setSelectedInstitutionId(e.target.value);
-                setLinkedStudent(null);
-              }}
-              className={inputClass}
-              disabled={institutionsLoading}
-            >
-              <option value="">
-                {institutionsLoading ? 'Loading institutions...' : "Select your child's institution"}
-              </option>
-              {institutions.map((inst) => (
-                <option key={inst.uid} value={inst.uid}>
-                  {inst.institutionName}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={parentRollNumber}
-              onChange={(e) => setParentRollNumber(e.target.value)}
-              className={inputClass}
-              placeholder="Child's roll number"
-            />
-            <button
-              type="button"
-              onClick={handleFindStudent}
-              disabled={linkingStudent}
-              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-sm font-semibold rounded-lg transition disabled:opacity-50 shrink-0"
-            >
-              {linkingStudent ? '...' : 'Find'}
-            </button>
-          </div>
-          {linkError && <p className="text-xs text-accent-danger">{linkError}</p>}
-          {linkedStudent && (
-            <p className="text-xs text-accent-success flex items-center gap-1.5">
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              Found — linking to {linkedStudent.displayName}
             </p>
           )}
         </div>
@@ -600,6 +533,45 @@ export default function RegisterForm() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {accountType === 'PARENT' && (
+          <div className="space-y-4 pt-2 border-t border-surface-border">
+            <p className="text-xs font-mono text-slate-500 uppercase tracking-wider pt-4">Your child</p>
+            <div>
+              <label className={labelClass}>Child's Institution</label>
+              <select
+                required
+                value={selectedInstitutionId}
+                onChange={(e) => setSelectedInstitutionId(e.target.value)}
+                className={inputClass}
+                disabled={institutionsLoading}
+              >
+                <option value="">
+                  {institutionsLoading ? 'Loading institutions...' : "Select your child's institution"}
+                </option>
+                {institutions.map((inst) => (
+                  <option key={inst.uid} value={inst.uid}>
+                    {inst.institutionName}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className={labelClass}>Child's Roll Number</label>
+              <input
+                type="text"
+                required
+                value={parentRollNumber}
+                onChange={(e) => setParentRollNumber(e.target.value)}
+                className={inputClass}
+                placeholder="e.g., 24-CS-101"
+              />
+              <p className="text-[11px] text-slate-500 mt-1">
+                We'll verify this matches a registered student right after your account is created.
+              </p>
+            </div>
           </div>
         )}
 
