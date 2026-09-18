@@ -2,19 +2,20 @@ import { Metadata } from 'next';
 import { ContentMetadata } from '@/types/content';
 
 export const SITE_CONFIG = {
-  name: 'Onyx Enterprise Student SaaS Platform',
+  name: 'CampusOS',
   domain: 'Student.OnyxStackLabs.com',
   baseUrl: 'https://Student.OnyxStackLabs.com',
   defaultDescription:
-    'An enterprise multi-tenant campus governance and AI-assisted learning platform built for higher education institutions.',
+    'CampusOS is an all-in-one platform for schools, colleges, and universities — attendance, grades, fees, timetables, AI-powered learning support, and campus safety, all in one place.',
   defaultOgImage: 'https://Student.OnyxStackLabs.com/og-default.jpg',
   twitterHandle: '@OnyxStackLabs',
   // Aliases used by root layout.tsx metadata block — kept in sync with the fields above.
-  title: 'Onyx Enterprise Student SaaS Platform',
-  siteName: 'OnyxStack Labs',
+  title: 'CampusOS — Campus Management, Simplified',
+  siteName: 'CampusOS',
   description:
-    'An enterprise multi-tenant campus governance and AI-assisted learning platform built for higher education institutions.',
+    'CampusOS is an all-in-one platform for schools, colleges, and universities — attendance, grades, fees, timetables, AI-powered learning support, and campus safety, all in one place.',
   url: 'https://Student.OnyxStackLabs.com',
+  agencyName: 'OnyxStack Labs',
 };
 
 export interface GenerateMetadataOptions {
@@ -29,7 +30,7 @@ export interface GenerateMetadataOptions {
 export function generatePageMetadata(options: GenerateMetadataOptions): Metadata {
   const fullTitle = options.title
     ? `${options.title} | ${SITE_CONFIG.name}`
-    : SITE_CONFIG.name;
+    : SITE_CONFIG.title;
   const description = options.description || SITE_CONFIG.defaultDescription;
   const canonicalUrl = options.slug
     ? `${SITE_CONFIG.baseUrl}/${options.slug.replace(/^\//, '')}`
@@ -39,10 +40,10 @@ export function generatePageMetadata(options: GenerateMetadataOptions): Metadata
   return {
     title: fullTitle,
     description: description,
-    keywords: options.keywords || ['EdTech', 'SaaS', 'Multi-Tenant', 'University Governance', 'AI Learning'],
-    authors: [{ name: 'OnyxStackLabs Team', url: SITE_CONFIG.baseUrl }],
-    creator: 'OnyxStackLabs',
-    publisher: 'OnyxStackLabs',
+    keywords: options.keywords || ['school management software', 'college ERP', 'student attendance app', 'campus management system', 'AI learning assistant'],
+    authors: [{ name: SITE_CONFIG.agencyName, url: SITE_CONFIG.baseUrl }],
+    creator: SITE_CONFIG.agencyName,
+    publisher: SITE_CONFIG.agencyName,
     alternates: {
       canonical: canonicalUrl,
     },
@@ -58,7 +59,7 @@ export function generatePageMetadata(options: GenerateMetadataOptions): Metadata
       title: fullTitle,
       description: description,
       url: canonicalUrl,
-      siteName: SITE_CONFIG.name,
+      siteName: SITE_CONFIG.siteName,
       images: [
         {
           url: ogImage,
